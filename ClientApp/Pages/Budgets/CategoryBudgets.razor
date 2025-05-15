@@ -1,0 +1,464 @@
+@page "/budgets/categories/{CategoryId}"
+@attribute [Authorize]
+@inject IBudgetService BudgetService
+@inject ICategoryService CategoryService
+@inject ITransactionService TransactionService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Category Budget - Finance Manager</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else if (_budget == null)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">Budget not found for this category</MudAlert>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/budgets"))">
+        Back to Budgets
+    </MudButton>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.False">
+        <MudGrid>
+            <MudItem xs="12">
+                <div class="d-flex flex-column flex-md-row justify-space-between align-md-center mb-4">
+                    <div class="d-flex align-center mb-4 mb-md-0">
+                        <MudAvatar Color="Color.Primary" Style="@($"background-color: {_budget.CategoryColor}")" Class="mr-3" Size="Size.Large">
+                            <MudIcon Icon="@_budget.CategoryIconName" />
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.h4">@_budget.CategoryName Budget</MudText>
+                            <MudText Typo="Typo.subtitle1">@_budget.Period.ToDisplayString() (@_budget.StartDate.ToString("MMM d, yyyy") - @(_budget.EndDate?.ToString("MMM d, yyyy") ?? "Ongoing"))</MudText>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <MudButton 
+                            Variant="Variant.Outlined" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.ArrowBack" 
+                            OnClick="@(() => NavigationManager.NavigateTo("/budgets"))"
+                            Class="mr-2">
+                            Back
+                        </MudButton>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.Edit" 
+                            OnClick="OpenEditBudgetDialog">
+                            Edit Budget
+                        </MudButton>
+                    </div>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="mb-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Budget Summary</MudText>
+                        <div class="d-flex flex-column align-center mb-4">
+                            <MudText Typo="Typo.body1">Budget Amount</MudText>
+                            <MudText Typo="Typo.h4">@FormatCurrency(_budget.Amount)</MudText>
+                        </div>
+                        <div class="position-relative mb-4" style="height: 180px;">
+                            <canvas id="budgetDonutChart"></canvas>
+                            <div class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                <MudText Typo="Typo.h5" Align="Align.Center">@_budget.PercentUsed%</MudText>
+                                <MudText Typo="Typo.caption" Align="Align.Center">Used</MudText>
+                            </div>
+                        </div>
+                        <MudList Dense="true">
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Spent</span>
+                                    <strong>@FormatCurrency(_budget.CurrentSpent)</strong>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Remaining</span>
+                                    <strong class="@(_budget.RemainingAmount >= 0 ? "" : "currency-negative")">
+                                        @FormatCurrency(_budget.RemainingAmount)
+                                    </strong>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Daily Budget</span>
+                                    <span>@FormatCurrency(_dailyBudget)</span>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Days Remaining</span>
+                                    <span>@_daysRemaining days</span>
+                                </MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Spending Trend</MudText>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="spendingTrendChart"></canvas>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Recent Transactions</MudText>
+
+                        @if (_categoryTransactions.Count == 0)
+                        {
+                            <MudText Typo="Typo.body1" Align="Align.Center" Class="my-4">No transactions found in this category for the current budget period.</MudText>
+                        }
+                        else
+                        {
+                            <MudTable Items="_categoryTransactions" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_isTransactionsLoading" 
+                                    LoadingProgressColor="Color.Primary" T="TransactionViewModel">
+                                <HeaderContent>
+                                    <MudTh>Date</MudTh>
+                                    <MudTh>Description</MudTh>
+                                    <MudTh>Account</MudTh>
+                                    <MudTh Style="text-align: right">Amount</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Date">@context.Date.ToShortDateString()</MudTd>
+                                    <MudTd DataLabel="Description">@context.Description</MudTd>
+                                    <MudTd DataLabel="Account">@context.AccountName</MudTd>
+                                    <MudTd DataLabel="Amount" Style="text-align: right">
+                                        <MudText Class="currency-negative">@FormatCurrency(context.Amount)</MudText>
+                                    </MudTd>
+                                </RowTemplate>
+                                <PagerContent>
+                                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50 }" />
+                                </PagerContent>
+                            </MudTable>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+}
+
+@code {
+    [Parameter]
+    public string CategoryId { get; set; }
+
+    private BudgetViewModel _budget;
+    private List<TransactionViewModel> _categoryTransactions = new();
+    private bool _isLoading = true;
+    private bool _isTransactionsLoading = false;
+    private string _budgetDonutChartId = "budgetDonutChart";
+    private string _spendingTrendChartId = "spendingTrendChart";
+    private decimal _dailyBudget = 0;
+    private int _daysRemaining = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            
+            // Get the budget for this category
+            var budgets = await BudgetService.GetBudgetsByCategoryAsync(CategoryId);
+            _budget = budgets.FirstOrDefault();
+            
+            if (_budget != null)
+            {
+                await LoadTransactionsAsync();
+                CalculateBudgetMetrics();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading budget data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _budget != null)
+        {
+            await RenderChartsAsync();
+        }
+    }
+
+    private async Task LoadTransactionsAsync()
+    {
+        try
+        {
+            _isTransactionsLoading = true;
+            
+            var filter = new TransactionFilterModel
+            {
+                StartDate = _budget.StartDate,
+                EndDate = _budget.EndDate ?? DateTime.Today.AddMonths(1),
+                CategoryId = CategoryId,
+                Type = TransactionType.EXPENSE
+            };
+            
+            _categoryTransactions = await TransactionService.GetTransactionsAsync(filter);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading transactions: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isTransactionsLoading = false;
+        }
+    }
+
+    private void CalculateBudgetMetrics()
+    {
+        var endDate = _budget.EndDate ?? DateTime.Today.AddMonths(1);
+        var totalDays = (endDate - _budget.StartDate).TotalDays;
+        var elapsedDays = (DateTime.Today - _budget.StartDate).TotalDays;
+        
+        _daysRemaining = Math.Max(0, (int)((endDate - DateTime.Today).TotalDays));
+        
+        if (totalDays > 0)
+        {
+            _dailyBudget = _budget.Amount / (decimal)totalDays;
+        }
+    }
+
+    private async Task RenderChartsAsync()
+    {
+        await RenderBudgetDonutChartAsync();
+        await RenderSpendingTrendChartAsync();
+    }
+
+    private async Task RenderBudgetDonutChartAsync()
+    {
+        var spent = (double)_budget.CurrentSpent;
+        var remaining = Math.Max(0, (double)_budget.RemainingAmount); // Don't show negative remaining
+        
+        var data = new[] { spent, remaining };
+        var colors = new[] { _budget.CategoryColor, "#E0E0E0" };
+        
+        var config = new
+        {
+            type = "doughnut",
+            data = new
+            {
+                datasets = new object[]
+                {
+                    new
+                    {
+                        data = data,
+                        backgroundColor = colors,
+                        borderWidth = 0,
+                        cutout = "75%"
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                plugins = new
+                {
+                    legend = new
+                    {
+                        display = false
+                    },
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.dataset.data[context.dataIndex].toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _budgetDonutChartId, config);
+    }
+
+    private async Task RenderSpendingTrendChartAsync()
+    {
+        // Group transactions by date and calculate daily spending
+        var groupedTransactions = _categoryTransactions
+            .OrderBy(t => t.Date)
+            .GroupBy(t => t.Date.Date)
+            .Select(g => new { Date = g.Key, Amount = g.Sum(t => t.Amount) })
+            .ToList();
+            
+        var dates = new List<DateTime>();
+        var amounts = new List<decimal>();
+        var runningTotal = new List<decimal>();
+        
+        // Start with budget start date
+        var currentDate = _budget.StartDate;
+        var currentTotal = 0m;
+        
+        // End with either budget end date or today, whichever is later
+        var endDate = _budget.EndDate.HasValue ? 
+            (_budget.EndDate.Value > DateTime.Today ? _budget.EndDate.Value : DateTime.Today) : 
+            DateTime.Today;
+            
+        while (currentDate <= endDate)
+        {
+            var daySpending = groupedTransactions.FirstOrDefault(g => g.Date == currentDate.Date)?.Amount ?? 0;
+            currentTotal += daySpending;
+            
+            dates.Add(currentDate);
+            amounts.Add(daySpending);
+            runningTotal.Add(currentTotal);
+            
+            currentDate = currentDate.AddDays(1);
+        }
+        
+        var config = new
+        {
+            type = "line",
+            data = new
+            {
+                labels = dates.Select(d => d.ToShortDateString()).ToArray(),
+                datasets = new object[]
+                {
+                    new
+                    {
+                        label = "Daily Spending",
+                        data = amounts.Select(a => (double)a).ToArray(),
+                        backgroundColor = "rgba(244, 67, 54, 0.2)",
+                        borderColor = "rgba(244, 67, 54, 1)",
+                        borderWidth = 1,
+                        pointRadius = 2,
+                        type = "bar",
+                        yAxisID = "y"
+                    },
+                    new
+                    {
+                        label = "Cumulative Spending",
+                        data = runningTotal.Select(a => (double)a).ToArray(),
+                        backgroundColor = "rgba(33, 150, 243, 0.2)",
+                        borderColor = "rgba(33, 150, 243, 1)",
+                        borderWidth = 2,
+                        fill = false,
+                        tension = 0.4,
+                        yAxisID = "y1"
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                scales = new
+                {
+                    x = new
+                    {
+                        ticks = new
+                        {
+                            maxRotation = 0,
+                            autoSkip = true,
+                            maxTicksLimit = 10
+                        }
+                    },
+                    y = new
+                    {
+                        type = "linear",
+                        display = true,
+                        position = "left",
+                        title = new
+                        {
+                            display = true,
+                            text = "Daily"
+                        },
+                        ticks = new
+                        {
+                            callback = "function(value) { return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
+                        },
+                        beginAtZero = true
+                    },
+                    y1 = new
+                    {
+                        type = "linear",
+                        display = true,
+                        position = "right",
+                        title = new
+                        {
+                            display = true,
+                            text = "Total"
+                        },
+                        ticks = new
+                        {
+                            callback = "function(value) { return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
+                        },
+                        beginAtZero = true,
+                        grid = new
+                        {
+                            drawOnChartArea = false
+                        }
+                    }
+                },
+                plugins = new
+                {
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.dataset.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _spendingTrendChartId, config);
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private async Task OpenEditBudgetDialog()
+    {
+        var categories = await CategoryService.GetCategoriesAsync();
+        
+        var parameters = new DialogParameters
+        {
+            { "Budget", _budget },
+            { "Categories", categories.Where(c => c.Type == TransactionType.EXPENSE).ToList() }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<BudgetOverview.AddEditBudgetDialog>("Edit Budget", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await OnInitializedAsync();
+            await RenderChartsAsync();
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_budget != null)
+        {
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _budgetDonutChartId);
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _spendingTrendChartId);
+        }
+    }
+}

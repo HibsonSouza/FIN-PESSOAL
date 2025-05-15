@@ -1,0 +1,611 @@
+@page "/investments/{Id}"
+@attribute [Authorize]
+@inject IInvestmentService InvestmentService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Investment Details - Finance Manager</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else if (_investment == null)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">Investment not found</MudAlert>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/investments"))">
+        Back to Investments
+    </MudButton>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.False">
+        <MudGrid>
+            <MudItem xs="12">
+                <div class="d-flex flex-column flex-md-row justify-space-between align-md-center mb-4">
+                    <div class="d-flex align-center mb-4 mb-md-0">
+                        <MudAvatar Color="Color.Primary" Class="mr-3" Size="Size.Large">
+                            <MudIcon Icon="@_investment.Type.GetIcon()" />
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.h4">@_investment.Name</MudText>
+                            <MudText Typo="Typo.subtitle1">@_investment.Type.ToDisplayString()</MudText>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <MudButton 
+                            Variant="Variant.Outlined" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.ArrowBack" 
+                            OnClick="@(() => NavigationManager.NavigateTo("/investments"))"
+                            Class="mr-2">
+                            Back
+                        </MudButton>
+                        <MudButton 
+                            Variant="Variant.Outlined" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.Edit" 
+                            OnClick="OpenEditInvestmentDialog"
+                            Class="mr-2">
+                            Edit
+                        </MudButton>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.Add" 
+                            OnClick="OpenAddTransactionDialog">
+                            Add Transaction
+                        </MudButton>
+                    </div>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="mb-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Investment Summary</MudText>
+                        <div class="d-flex flex-column align-center mb-4">
+                            <MudText Typo="Typo.body1">Current Value</MudText>
+                            <MudText Typo="Typo.h4">@FormatCurrency(_investment.CurrentValue)</MudText>
+                            <MudText Typo="Typo.body2" Class="@(_investment.GainLoss >= 0 ? "currency-positive" : "currency-negative")">
+                                @(_investment.GainLoss >= 0 ? "+" : "")@FormatCurrency(_investment.GainLoss) (@(_investment.GainLossPercentage.ToString("0.00"))%)
+                            </MudText>
+                        </div>
+                        <MudList Dense="true">
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Initial Value</span>
+                                    <strong>@FormatCurrency(_investment.InitialValue)</strong>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Acquisition Date</span>
+                                    <span>@_investment.AcquisitionDate.ToShortDateString()</span>
+                                </MudText>
+                            </MudListItem>
+                            @if (!string.IsNullOrEmpty(_investment.Institution))
+                            {
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                        <span>Institution</span>
+                                        <span>@_investment.Institution</span>
+                                    </MudText>
+                                </MudListItem>
+                            }
+                            @if (_investment.Profitability.HasValue)
+                            {
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                        <span>Profitability</span>
+                                        <span>@_investment.Profitability.Value.ToString("0.00")%</span>
+                                    </MudText>
+                                </MudListItem>
+                            }
+                            @if (!string.IsNullOrEmpty(_investment.Risk))
+                            {
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                        <span>Risk Level</span>
+                                        <span>@_investment.Risk</span>
+                                    </MudText>
+                                </MudListItem>
+                            }
+                            @if (_investment.LiquidityDays.HasValue)
+                            {
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                        <span>Liquidity</span>
+                                        <span>@_investment.LiquidityDays.Value days</span>
+                                    </MudText>
+                                </MudListItem>
+                            }
+                            @if (_investment.MaturityDate.HasValue)
+                            {
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                        <span>Maturity Date</span>
+                                        <span>@_investment.MaturityDate.Value.ToShortDateString()</span>
+                                    </MudText>
+                                </MudListItem>
+                            }
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Status</span>
+                                    <MudChip Color="@(_investment.IsActive ? Color.Success : Color.Error)" Size="Size.Small">
+                                        @(_investment.IsActive ? "Active" : "Inactive")
+                                    </MudChip>
+                                </MudText>
+                            </MudListItem>
+                        </MudList>
+                        @if (!string.IsNullOrEmpty(_investment.Notes))
+                        {
+                            <MudDivider Class="my-4" />
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Notes</MudText>
+                            <MudText Typo="Typo.body2">@_investment.Notes</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Value History</MudText>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="valueHistoryChart"></canvas>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex justify-space-between align-center mb-4">
+                            <MudText Typo="Typo.h6">Transaction History</MudText>
+                            <MudButton 
+                                Variant="Variant.Outlined" 
+                                Color="Color.Primary" 
+                                StartIcon="@Icons.Material.Filled.Add" 
+                                OnClick="OpenAddTransactionDialog">
+                                Add Transaction
+                            </MudButton>
+                        </div>
+
+                        @if (_investment.Transactions.Count == 0)
+                        {
+                            <MudText Typo="Typo.body1" Align="Align.Center" Class="my-4">No transaction history found for this investment.</MudText>
+                        }
+                        else
+                        {
+                            <MudTable Items="_investment.Transactions" Hover="true" Breakpoint="Breakpoint.Sm" T="InvestmentTransactionViewModel">
+                                <HeaderContent>
+                                    <MudTh>Date</MudTh>
+                                    <MudTh>Type</MudTh>
+                                    <MudTh>Amount</MudTh>
+                                    <MudTh>Quantity</MudTh>
+                                    <MudTh>Price</MudTh>
+                                    <MudTh>Actions</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Date">@context.Date.ToShortDateString()</MudTd>
+                                    <MudTd DataLabel="Type">
+                                        <MudChip Size="Size.Small" Color="@context.Type.GetColor()">
+                                            @context.Type.ToDisplayString()
+                                        </MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Amount">@FormatCurrency(context.Amount)</MudTd>
+                                    <MudTd DataLabel="Quantity">@(context.Quantity.HasValue ? context.Quantity.Value.ToString("0.####") : "-")</MudTd>
+                                    <MudTd DataLabel="Price">@(context.Price.HasValue ? FormatCurrency(context.Price.Value) : "-")</MudTd>
+                                    <MudTd>
+                                        <MudIconButton 
+                                            Icon="@Icons.Material.Filled.Edit" 
+                                            Size="Size.Small" 
+                                            OnClick="@(() => OpenEditTransactionDialog(context))" />
+                                        <MudIconButton 
+                                            Icon="@Icons.Material.Filled.Delete" 
+                                            Size="Size.Small" 
+                                            OnClick="@(() => OpenDeleteTransactionDialog(context.Id))" />
+                                    </MudTd>
+                                </RowTemplate>
+                                <PagerContent>
+                                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                                </PagerContent>
+                            </MudTable>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private InvestmentViewModel _investment;
+    private bool _isLoading = true;
+    private string _valueHistoryChartId = "valueHistoryChart";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            _investment = await InvestmentService.GetInvestmentByIdAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading investment: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _investment != null)
+        {
+            await RenderValueHistoryChartAsync();
+        }
+    }
+
+    private async Task RenderValueHistoryChartAsync()
+    {
+        var transactions = _investment.Transactions.OrderBy(t => t.Date).ToList();
+        
+        if (transactions.Count == 0)
+        {
+            // Only initial and current value
+            var dates = new[] { _investment.AcquisitionDate, DateTime.Today };
+            var values = new[] { (double)_investment.InitialValue, (double)_investment.CurrentValue };
+
+            var config = new
+            {
+                type = "line",
+                data = new
+                {
+                    labels = dates.Select(d => d.ToShortDateString()).ToArray(),
+                    datasets = new object[]
+                    {
+                        new
+                        {
+                            label = "Investment Value",
+                            data = values,
+                            backgroundColor = "rgba(33, 150, 243, 0.2)",
+                            borderColor = "rgba(33, 150, 243, 1)",
+                            borderWidth = 2,
+                            tension = 0.4,
+                            fill = true
+                        }
+                    }
+                },
+                options = new
+                {
+                    responsive = true,
+                    maintainAspectRatio = false,
+                    scales = new
+                    {
+                        y = new
+                        {
+                            beginAtZero = false,
+                            ticks = new
+                            {
+                                callback = "function(value) { return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
+                            }
+                        }
+                    },
+                    plugins = new
+                    {
+                        tooltip = new
+                        {
+                            callbacks = new
+                            {
+                                label = "function(context) { return context.dataset.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
+                            }
+                        }
+                    }
+                }
+            };
+
+            await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _valueHistoryChartId, config);
+            return;
+        }
+        
+        // Create a running value chart based on transactions
+        var dates = new List<DateTime> { _investment.AcquisitionDate };
+        var values = new List<decimal> { _investment.InitialValue };
+        
+        var currentValue = _investment.InitialValue;
+        
+        foreach (var transaction in transactions)
+        {
+            // Only include value-changing transactions
+            switch (transaction.Type)
+            {
+                case InvestmentTransactionType.BUY:
+                case InvestmentTransactionType.CONTRIBUTION:
+                    currentValue += transaction.Amount;
+                    break;
+                case InvestmentTransactionType.SELL:
+                case InvestmentTransactionType.WITHDRAWAL:
+                    currentValue -= transaction.Amount;
+                    break;
+                case InvestmentTransactionType.DIVIDEND:
+                case InvestmentTransactionType.INTEREST:
+                    currentValue += transaction.Amount;
+                    break;
+                case InvestmentTransactionType.TAX:
+                case InvestmentTransactionType.FEE:
+                    currentValue -= transaction.Amount;
+                    break;
+            }
+            
+            dates.Add(transaction.Date);
+            values.Add(currentValue);
+        }
+        
+        // Add current value at the end if it's different
+        if (Math.Abs(currentValue - _investment.CurrentValue) > 0.01m)
+        {
+            dates.Add(DateTime.Today);
+            values.Add(_investment.CurrentValue);
+        }
+        
+        var config = new
+        {
+            type = "line",
+            data = new
+            {
+                labels = dates.Select(d => d.ToShortDateString()).ToArray(),
+                datasets = new object[]
+                {
+                    new
+                    {
+                        label = "Investment Value",
+                        data = values.Select(v => (double)v).ToArray(),
+                        backgroundColor = "rgba(33, 150, 243, 0.2)",
+                        borderColor = "rgba(33, 150, 243, 1)",
+                        borderWidth = 2,
+                        tension = 0.4,
+                        fill = true
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                scales = new
+                {
+                    y = new
+                    {
+                        beginAtZero = false,
+                        ticks = new
+                        {
+                            callback = "function(value) { return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
+                        }
+                    }
+                },
+                plugins = new
+                {
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.dataset.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _valueHistoryChartId, config);
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private async Task OpenEditInvestmentDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Investment", _investment }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<InvestmentsList.AddEditInvestmentDialog>("Edit Investment", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await RefreshDataAsync();
+        }
+    }
+
+    private async Task OpenAddTransactionDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "InvestmentId", Id }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddEditTransactionDialog>("Add Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await RefreshDataAsync();
+        }
+    }
+
+    private async Task OpenEditTransactionDialog(InvestmentTransactionViewModel transaction)
+    {
+        var parameters = new DialogParameters
+        {
+            { "InvestmentId", Id },
+            { "Transaction", transaction }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddEditTransactionDialog>("Edit Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await RefreshDataAsync();
+        }
+    }
+
+    private async Task OpenDeleteTransactionDialog(string transactionId)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "Are you sure you want to delete this transaction? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Delete Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteTransactionAsync(transactionId);
+        }
+    }
+
+    private async Task DeleteTransactionAsync(string transactionId)
+    {
+        try
+        {
+            await InvestmentService.DeleteInvestmentTransactionAsync(transactionId);
+            Snackbar.Add("Transaction deleted successfully", Severity.Success);
+            await RefreshDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting transaction: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RefreshDataAsync()
+    {
+        try
+        {
+            _investment = await InvestmentService.GetInvestmentByIdAsync(Id);
+            await RenderValueHistoryChartAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error refreshing data: {ex.Message}", Severity.Error);
+        }
+    }
+
+    public class AddEditTransactionDialog : ComponentBase
+    {
+        [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+        [Parameter] public string InvestmentId { get; set; }
+        [Parameter] public InvestmentTransactionViewModel Transaction { get; set; }
+
+        private bool _isEdit => Transaction != null;
+        private InvestmentTransactionFormModel _model = new();
+        private bool _isValid;
+        private bool _isBusy;
+        private string[] _errors = { };
+        private MudForm _form;
+
+        [Inject] private IInvestmentService InvestmentService { get; set; }
+        [Inject] private ISnackbar Snackbar { get; set; }
+
+        protected override void OnInitialized()
+        {
+            if (_isEdit)
+            {
+                _model = new InvestmentTransactionFormModel
+                {
+                    InvestmentId = InvestmentId,
+                    Type = Transaction.Type,
+                    Amount = Transaction.Amount,
+                    Date = Transaction.Date,
+                    Price = Transaction.Price,
+                    Quantity = Transaction.Quantity,
+                    Taxes = Transaction.Taxes,
+                    Notes = Transaction.Notes
+                };
+            }
+            else
+            {
+                _model.InvestmentId = InvestmentId;
+                _model.Date = DateTime.Today;
+                _model.Type = InvestmentTransactionType.BUY;
+            }
+        }
+
+        private async Task SubmitAsync()
+        {
+            if (!_isValid)
+            {
+                Snackbar.Add("Please fill in all required fields", Severity.Warning);
+                return;
+            }
+
+            try
+            {
+                _isBusy = true;
+
+                if (_isEdit)
+                {
+                    await InvestmentService.UpdateInvestmentTransactionAsync(Transaction.Id, _model);
+                    Snackbar.Add("Transaction updated successfully", Severity.Success);
+                }
+                else
+                {
+                    await InvestmentService.AddInvestmentTransactionAsync(_model);
+                    Snackbar.Add("Transaction added successfully", Severity.Success);
+                }
+                
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error saving transaction: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
+        private void Cancel() => MudDialog.Cancel();
+
+        private bool ShowQuantityAndPrice(InvestmentTransactionType type)
+        {
+            return type == InvestmentTransactionType.BUY || 
+                   type == InvestmentTransactionType.SELL;
+        }
+
+        private string GetTransactionTypeIcon(InvestmentTransactionType type)
+        {
+            return type.GetIcon();
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_investment != null)
+        {
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _valueHistoryChartId);
+        }
+    }
+}

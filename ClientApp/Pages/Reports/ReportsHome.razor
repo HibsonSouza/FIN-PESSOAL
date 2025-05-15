@@ -1,0 +1,189 @@
+@page "/reports"
+@attribute [Authorize]
+@inject IReportService ReportService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Reports - Finance Manager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudText Typo="Typo.h4" Class="mb-4">Financial Reports</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6">Available Reports</MudText>
+                <MudText Typo="Typo.body2" Class="mt-2">
+                    Select a report type to generate detailed financial insights.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard @onclick="@(() => NavigationManager.NavigateTo("/reports/expense"))" Class="dashboard-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Error" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowDownward" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Expense Report</MudText>
+                        <MudText Typo="Typo.body2">Analyze your spending patterns</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        View detailed breakdowns of your expenses by category, time period, and vendor.
+                        Identify spending trends and areas for potential savings.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ChevronRight" Class="ml-auto">
+                        View Report
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard @onclick="@(() => NavigationManager.NavigateTo("/reports/income"))" Class="dashboard-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Success" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.ArrowUpward" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Income Report</MudText>
+                        <MudText Typo="Typo.body2">Track your revenue sources</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        Analyze your income streams by source, frequency, and growth over time.
+                        Track changes in your earning patterns and identify opportunities.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ChevronRight" Class="ml-auto">
+                        View Report
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard @onclick="@(() => NavigationManager.NavigateTo("/reports/cashflow"))" Class="dashboard-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Info" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Cash Flow Report</MudText>
+                        <MudText Typo="Typo.body2">Monitor your financial movements</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        Get a comprehensive view of your cash flow patterns across all accounts.
+                        Visualize your financial inflows and outflows over time.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ChevronRight" Class="ml-auto">
+                        View Report
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard @onclick="@(() => NavigationManager.NavigateTo("/reports/budget"))" Class="dashboard-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Warning" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.PieChart" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Budget Performance</MudText>
+                        <MudText Typo="Typo.body2">Track budget compliance</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        Compare your actual spending against your budgeted amounts.
+                        Identify areas where you're exceeding or under-utilizing your budget.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ChevronRight" Class="ml-auto">
+                        View Report
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard @onclick="@(() => NavigationManager.NavigateTo("/reports/networth"))" Class="dashboard-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Secondary" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Net Worth Report</MudText>
+                        <MudText Typo="Typo.body2">Monitor your wealth growth</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        Track your overall financial position by analyzing assets, liabilities, and net worth over time.
+                        Measure your financial progress toward long-term goals.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ChevronRight" Class="ml-auto">
+                        View Report
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard @onclick="@(() => NavigationManager.NavigateTo("/reports/tax"))" Class="dashboard-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Dark" Size="Size.Large">
+                            <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Tax Summary</MudText>
+                        <MudText Typo="Typo.body2">Prepare for tax season</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        Summarize income, deductible expenses, and investments relevant for tax preparation.
+                        Export data in formats suitable for tax filing.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ChevronRight" Class="ml-auto">
+                        View Report
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    // No additional logic required for this page
+    // Navigation to specific reports is handled via the card click events
+}

@@ -1,0 +1,452 @@
+@page "/accounts/{Id}"
+@attribute [Authorize]
+@inject IAccountService AccountService
+@inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Account Details - Finance Manager</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else if (_account == null)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">Account not found</MudAlert>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/accounts"))">
+        Back to Accounts
+    </MudButton>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.False">
+        <MudGrid>
+            <MudItem xs="12">
+                <div class="d-flex flex-column flex-md-row justify-space-between align-md-center mb-4">
+                    <div class="d-flex align-center mb-4 mb-md-0">
+                        <MudAvatar Color="Color.Primary" Style="@($"background-color: {_account.Color}")" Class="mr-3" Size="Size.Large">
+                            <MudIcon Icon="@_account.IconName" />
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.h4">@_account.Name</MudText>
+                            <MudText Typo="Typo.subtitle1">@_account.Type.ToDisplayString()</MudText>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <MudButton 
+                            Variant="Variant.Outlined" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.Edit" 
+                            OnClick="@(() => NavigationManager.NavigateTo($"/accounts/edit/{Id}"))"
+                            Class="mr-2">
+                            Edit
+                        </MudButton>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.Add" 
+                            OnClick="OpenAddTransactionDialog">
+                            Add Transaction
+                        </MudButton>
+                    </div>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="mb-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Account Summary</MudText>
+                        <MudList Dense="true">
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Current Balance</span>
+                                    <strong>@FormatCurrency(_account.Balance)</strong>
+                                </MudText>
+                            </MudListItem>
+                            @if (!string.IsNullOrEmpty(_account.Institution))
+                            {
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                        <span>Institution</span>
+                                        <span>@_account.Institution</span>
+                                    </MudText>
+                                </MudListItem>
+                            }
+                            @if (!string.IsNullOrEmpty(_account.AccountNumber))
+                            {
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                        <span>Account Number</span>
+                                        <span>@MaskAccountNumber(_account.AccountNumber)</span>
+                                    </MudText>
+                                </MudListItem>
+                            }
+                            @if (!string.IsNullOrEmpty(_account.Agency))
+                            {
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                        <span>Agency</span>
+                                        <span>@_account.Agency</span>
+                                    </MudText>
+                                </MudListItem>
+                            }
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Status</span>
+                                    <MudChip Color="@(_account.IsActive ? Color.Success : Color.Error)" Size="Size.Small">
+                                        @(_account.IsActive ? "Active" : "Inactive")
+                                    </MudChip>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Created on</span>
+                                    <span>@_account.CreatedAt.ToShortDateString()</span>
+                                </MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Balance History</MudText>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="balanceHistoryChart"></canvas>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex justify-space-between align-center mb-4">
+                            <MudText Typo="Typo.h6">Recent Transactions</MudText>
+                            <div class="d-flex">
+                                <MudDateRangePicker 
+                                    @bind-DateRange="_dateRange" 
+                                    Label="Date Range" 
+                                    Variant="Variant.Outlined" 
+                                    AdornmentColor="Color.Primary"
+                                    Style="width: 300px;"
+                                    Class="mr-2" />
+                                <MudButton 
+                                    Variant="Variant.Outlined" 
+                                    Color="Color.Primary" 
+                                    OnClick="ApplyFilters">
+                                    Apply
+                                </MudButton>
+                            </div>
+                        </div>
+
+                        @if (_transactions.Count == 0)
+                        {
+                            <MudText Typo="Typo.body1" Align="Align.Center" Class="my-4">No transactions found for this account.</MudText>
+                        }
+                        else
+                        {
+                            <MudTable Items="_transactions" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_isTransactionsLoading" 
+                                     LoadingProgressColor="Color.Primary" SortLabel="Sort By">
+                                <HeaderContent>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<TransactionViewModel, object>(x => x.Date)">Date</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<TransactionViewModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<TransactionViewModel, object>(x => x.CategoryName)">Category</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<TransactionViewModel, object>(x => x.Amount)">Amount</MudTableSortLabel></MudTh>
+                                    <MudTh>Actions</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Date">@context.Date.ToShortDateString()</MudTd>
+                                    <MudTd DataLabel="Description">@context.Description</MudTd>
+                                    <MudTd DataLabel="Category">
+                                        @if (!string.IsNullOrEmpty(context.CategoryName))
+                                        {
+                                            <MudChip 
+                                                Size="Size.Small" 
+                                                Color="@GetCategoryColor(context.Type)"
+                                                Label="true">
+                                                @context.CategoryName
+                                            </MudChip>
+                                        }
+                                    </MudTd>
+                                    <MudTd DataLabel="Amount">
+                                        <MudText Class="@GetAmountColor(context.Type)">
+                                            @(context.Type == TransactionType.EXPENSE ? "-" : "")@FormatCurrency(Math.Abs(context.Amount))
+                                        </MudText>
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudIconButton 
+                                            Icon="@Icons.Material.Filled.Edit" 
+                                            Size="Size.Small" 
+                                            OnClick="@(() => OpenEditTransactionDialog(context))" />
+                                        <MudIconButton 
+                                            Icon="@Icons.Material.Filled.Delete" 
+                                            Size="Size.Small" 
+                                            OnClick="@(() => OpenDeleteTransactionDialog(context.Id, context.Description))" />
+                                    </MudTd>
+                                </RowTemplate>
+                                <PagerContent>
+                                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                                </PagerContent>
+                            </MudTable>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private AccountViewModel _account;
+    private List<TransactionViewModel> _transactions = new();
+    private bool _isLoading = true;
+    private bool _isTransactionsLoading = true;
+    private DateRange _dateRange = new(DateTime.Now.AddMonths(-1), DateTime.Now);
+    private string _balanceHistoryChartId = "balanceHistoryChart";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            _account = await AccountService.GetAccountByIdAsync(Id);
+            await LoadTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading account: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _account != null)
+        {
+            await RenderBalanceHistoryChartAsync();
+        }
+    }
+
+    private async Task LoadTransactionsAsync()
+    {
+        try
+        {
+            _isTransactionsLoading = true;
+            _transactions = await AccountService.GetAccountTransactionsAsync(
+                Id, 
+                _dateRange.Start, 
+                _dateRange.End
+            );
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading transactions: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isTransactionsLoading = false;
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadTransactionsAsync();
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private string MaskAccountNumber(string accountNumber)
+    {
+        if (string.IsNullOrEmpty(accountNumber) || accountNumber.Length <= 4)
+            return accountNumber;
+
+        var last4 = accountNumber.Substring(accountNumber.Length - 4);
+        var stars = new string('*', accountNumber.Length - 4);
+        return $"{stars}{last4}";
+    }
+
+    private string GetAmountColor(TransactionType type)
+    {
+        return type == TransactionType.EXPENSE ? "currency-negative" : "currency-positive";
+    }
+
+    private Color GetCategoryColor(TransactionType type)
+    {
+        return type switch
+        {
+            TransactionType.INCOME => Color.Success,
+            TransactionType.EXPENSE => Color.Error,
+            TransactionType.TRANSFER => Color.Info,
+            _ => Color.Default
+        };
+    }
+
+    private async Task OpenAddTransactionDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "AccountId", Id }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<Pages.Transactions.AddEditTransaction>("Add Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadTransactionsAsync();
+            _account = await AccountService.GetAccountByIdAsync(Id);
+            await RenderBalanceHistoryChartAsync();
+        }
+    }
+
+    private async Task OpenEditTransactionDialog(TransactionViewModel transaction)
+    {
+        var parameters = new DialogParameters
+        {
+            { "TransactionId", transaction.Id },
+            { "AccountId", Id }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<Pages.Transactions.AddEditTransaction>("Edit Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadTransactionsAsync();
+            _account = await AccountService.GetAccountByIdAsync(Id);
+            await RenderBalanceHistoryChartAsync();
+        }
+    }
+
+    private async Task OpenDeleteTransactionDialog(string transactionId, string description)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the transaction '{description}'? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Delete Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteTransactionAsync(transactionId);
+        }
+    }
+
+    private async Task DeleteTransactionAsync(string transactionId)
+    {
+        try
+        {
+            await TransactionService.DeleteTransactionAsync(transactionId);
+            Snackbar.Add("Transaction deleted successfully", Severity.Success);
+            await LoadTransactionsAsync();
+            _account = await AccountService.GetAccountByIdAsync(Id);
+            await RenderBalanceHistoryChartAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting transaction: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RenderBalanceHistoryChartAsync()
+    {
+        // Group transactions by date and calculate running balance
+        var sortedTransactions = _transactions.OrderBy(t => t.Date).ToList();
+        var startBalance = _account.Balance - sortedTransactions.Sum(t => t.Type == TransactionType.EXPENSE ? -t.Amount : t.Amount);
+
+        var balanceData = new List<decimal> { startBalance };
+        var dateLabels = new List<string> { sortedTransactions.Count > 0 ? sortedTransactions.Min(t => t.Date).AddDays(-1).ToShortDateString() : DateTime.Now.AddMonths(-1).ToShortDateString() };
+
+        var runningBalance = startBalance;
+        var transactionsByDate = sortedTransactions.GroupBy(t => t.Date.Date).OrderBy(g => g.Key);
+
+        foreach (var group in transactionsByDate)
+        {
+            foreach (var transaction in group)
+            {
+                runningBalance += transaction.Type == TransactionType.EXPENSE ? -transaction.Amount : transaction.Amount;
+            }
+            balanceData.Add(runningBalance);
+            dateLabels.Add(group.Key.ToShortDateString());
+        }
+
+        var config = new
+        {
+            type = "line",
+            data = new
+            {
+                labels = dateLabels.ToArray(),
+                datasets = new object[]
+                {
+                    new
+                    {
+                        label = "Balance",
+                        data = balanceData.ToArray(),
+                        backgroundColor = "rgba(21, 101, 192, 0.1)",
+                        borderColor = "rgba(21, 101, 192, 1)",
+                        borderWidth = 2,
+                        tension = 0.4,
+                        fill = true
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                scales = new
+                {
+                    y = new
+                    {
+                        ticks = new
+                        {
+                            callback = "function(value) { return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
+                        }
+                    }
+                },
+                plugins = new
+                {
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.dataset.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _balanceHistoryChartId, config);
+    }
+
+    public void Dispose()
+    {
+        if (_account != null)
+        {
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _balanceHistoryChartId);
+        }
+    }
+}

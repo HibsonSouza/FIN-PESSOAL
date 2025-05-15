@@ -1,0 +1,241 @@
+@page "/credit-cards"
+@attribute [Authorize]
+@inject ICreditCardService CreditCardService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Credit Cards - Finance Manager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudText Typo="Typo.h4" Class="mb-4">Credit Cards</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.h6">Your Credit Cards</MudText>
+                    <MudButton 
+                        Variant="Variant.Filled" 
+                        Color="Color.Primary" 
+                        EndIcon="@Icons.Material.Filled.Add" 
+                        OnClick="@(() => NavigationManager.NavigateTo("/credit-cards/add"))">
+                        Add Card
+                    </MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        @if (_isLoading)
+        {
+            <MudItem xs="12">
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+            </MudItem>
+        }
+        else if (_creditCards.Count == 0)
+        {
+            <MudItem xs="12">
+                <MudPaper Class="pa-12" Elevation="2">
+                    <div class="d-flex flex-column align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.CreditCard" Color="Color.Primary" Size="Size.Large" Class="mb-4" />
+                        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No credit cards found</MudText>
+                        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-4">Add your first credit card to start tracking your expenses.</MudText>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            OnClick="@(() => NavigationManager.NavigateTo("/credit-cards/add"))">
+                            Add Your First Credit Card
+                        </MudButton>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        }
+        else
+        {
+            foreach (var card in _creditCards)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Class="dashboard-card" @onclick="@(() => NavigationManager.NavigateTo($"/credit-cards/{card.Id}"))">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary" Style="@($"background-color: {card.Color}")">
+                                    <MudIcon Icon="@(string.IsNullOrEmpty(card.IconName) ? Icons.Material.Filled.CreditCard : card.IconName)" />
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">@card.Name</MudText>
+                                @if (!string.IsNullOrEmpty(card.LastFourDigits))
+                                {
+                                    <MudText Typo="Typo.caption">**** @card.LastFourDigits</MudText>
+                                }
+                                else if (!string.IsNullOrEmpty(card.Bank))
+                                {
+                                    <MudText Typo="Typo.caption">@card.Bank</MudText>
+                                }
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                    <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo($"/credit-cards/{card.Id}"))">View</MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo($"/credit-cards/edit/{card.Id}"))">Edit</MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenDeleteDialog(card.Id, card.Name))">Delete</MudMenuItem>
+                                </MudMenu>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.subtitle2">Current Balance</MudText>
+                                    <MudText Typo="Typo.body1" Class="currency-negative">@FormatCurrency(card.CurrentBalance)</MudText>
+                                </MudItem>
+                                
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.subtitle2">Available Credit</MudText>
+                                    <MudText Typo="Typo.body1">@FormatCurrency(card.AvailableLimit)</MudText>
+                                </MudItem>
+                                
+                                <MudItem xs="12" Class="mt-3">
+                                    <MudText Typo="Typo.caption">Credit Limit: @FormatCurrency(card.Limit)</MudText>
+                                    <MudProgressLinear 
+                                        Value="@CalculateUsedPercentage(card)" 
+                                        Color="@GetProgressColor(card)" 
+                                        Class="my-1" />
+                                    <MudText Typo="Typo.caption" Align="Align.Right">@CalculateUsedPercentage(card)% Used</MudText>
+                                </MudItem>
+                                
+                                <MudItem xs="12" Class="d-flex align-center justify-space-between mt-2">
+                                    <MudText Typo="Typo.caption">Due on @GetNextDueDate(card).ToShortDateString()</MudText>
+                                    <MudChip Size="Size.Small" Color="Color.Warning">
+                                        @GetDaysUntilDue(card) days left
+                                    </MudChip>
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => OpenAddTransactionDialog(card.Id))" Class="ml-auto">
+                                Add Transaction
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<CreditCardViewModel> _creditCards = new();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCreditCardsAsync();
+    }
+
+    private async Task LoadCreditCardsAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            _creditCards = await CreditCardService.GetCreditCardsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading credit cards: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OpenDeleteDialog(string cardId, string cardName)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the credit card '{cardName}'? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Delete Credit Card", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteCreditCardAsync(cardId);
+        }
+    }
+
+    private async Task DeleteCreditCardAsync(string cardId)
+    {
+        try
+        {
+            await CreditCardService.DeleteCreditCardAsync(cardId);
+            Snackbar.Add("Credit card deleted successfully", Severity.Success);
+            await LoadCreditCardsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting credit card: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private double CalculateUsedPercentage(CreditCardViewModel card)
+    {
+        if (card.Limit <= 0) return 0;
+        return Math.Round((double)(card.CurrentBalance / card.Limit * 100), 1);
+    }
+
+    private Color GetProgressColor(CreditCardViewModel card)
+    {
+        var percentage = CalculateUsedPercentage(card);
+        
+        if (percentage < 50)
+            return Color.Success;
+        if (percentage < 75)
+            return Color.Warning;
+        return Color.Error;
+    }
+
+    private DateTime GetNextDueDate(CreditCardViewModel card)
+    {
+        var today = DateTime.Today;
+        var dueDate = new DateTime(today.Year, today.Month, card.DueDay);
+        
+        if (dueDate < today)
+        {
+            dueDate = dueDate.AddMonths(1);
+        }
+        
+        return dueDate;
+    }
+
+    private int GetDaysUntilDue(CreditCardViewModel card)
+    {
+        var dueDate = GetNextDueDate(card);
+        return (dueDate - DateTime.Today).Days;
+    }
+
+    private async Task OpenAddTransactionDialog(string cardId)
+    {
+        var parameters = new DialogParameters
+        {
+            { "CreditCardId", cardId }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<Pages.Transactions.AddEditTransaction>("Add Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadCreditCardsAsync();
+        }
+    }
+}

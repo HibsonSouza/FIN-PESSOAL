@@ -1,0 +1,149 @@
+@page "/login"
+@layout EmptyLayout
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center mud-height-full">
+    <MudPaper Elevation="3" Class="pa-8 auth-card">
+        <MudText Typo="Typo.h4" Class="mb-4" Align="Align.Center">Finance Manager</MudText>
+        <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Login</MudText>
+        
+        <MudForm @ref="_form" @bind-IsValid="@_success" @bind-Errors="@_errors">
+            <MudTextField 
+                T="string" 
+                Label="Email" 
+                @bind-Value="_model.Email" 
+                Required="true" 
+                RequiredError="Email is required!"
+                Validation="@(new EmailAddressAttribute() { ErrorMessage = "That doesn't look like a valid email address" })"
+                Variant="Variant.Outlined" 
+                Class="mb-3" />
+                
+            <MudTextField 
+                T="string" 
+                Label="Password" 
+                @bind-Value="_model.Password"
+                Required="true" 
+                RequiredError="Password is required!"
+                Variant="Variant.Outlined"
+                InputType="@_passwordInput" 
+                Adornment="Adornment.End" 
+                AdornmentIcon="@_passwordInputIcon" 
+                OnAdornmentClick="TogglePasswordVisibility" 
+                Class="mb-3" />
+                
+            <MudCheckBox T="bool" Label="Remember me" @bind-Checked="@_model.RememberMe" Class="mb-3"></MudCheckBox>
+            
+            @if (_isBusy)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-3" />
+            }
+            
+            <MudButton 
+                Variant="Variant.Filled" 
+                Color="Color.Primary" 
+                FullWidth="true" 
+                Disabled="@(!_success || _isBusy)" 
+                OnClick="LoginAsync" 
+                Class="mb-3">Login</MudButton>
+                
+            <MudText Align="Align.Center" Class="my-2">
+                <MudLink Href="/forgot-password">Forgot Password?</MudLink>
+            </MudText>
+            
+            <MudDivider Class="my-4" />
+            
+            <MudText Align="Align.Center">
+                Don't have an account? <MudLink Href="/register">Create one</MudLink>
+            </MudText>
+        </MudForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private LoginModel _model = new();
+    private bool _success;
+    private string[] _errors = { };
+    private MudForm _form;
+    private bool _isBusy = false;
+    
+    private InputType _passwordInput = InputType.Password;
+    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+    
+    protected override void OnInitialized()
+    {
+        // If user is already logged in, redirect to dashboard
+        if (AuthService.IsAuthenticated())
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+    
+    private async Task LoginAsync()
+    {
+        if (!_success)
+        {
+            Snackbar.Add("Please fill in all required fields correctly.", Severity.Warning);
+            return;
+        }
+        
+        _isBusy = true;
+        
+        try
+        {
+            var result = await AuthService.LoginAsync(_model);
+            
+            if (result.Succeeded)
+            {
+                NavigationManager.NavigateTo("/", true);
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Login failed. Please check your credentials and try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+    
+    private void TogglePasswordVisibility()
+    {
+        if (_passwordInput == InputType.Password)
+        {
+            _passwordInput = InputType.Text;
+            _passwordInputIcon = Icons.Material.Filled.Visibility;
+        }
+        else
+        {
+            _passwordInput = InputType.Password;
+            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
+        }
+    }
+    
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string Email { get; set; }
+        
+        [Required(ErrorMessage = "Password is required")]
+        public string Password { get; set; }
+        
+        public bool RememberMe { get; set; }
+    }
+    
+    public class EmptyLayout : LayoutComponentBase
+    {
+        protected override void OnInitialized()
+        {
+            // Empty layout for login/register pages
+        }
+    }
+}

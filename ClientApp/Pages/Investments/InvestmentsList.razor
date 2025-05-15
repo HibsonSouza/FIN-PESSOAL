@@ -1,0 +1,504 @@
+@page "/investments"
+@attribute [Authorize]
+@inject IInvestmentService InvestmentService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Investments - Finance Manager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudText Typo="Typo.h4" Class="mb-4">Investments</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.h6">Your Investments</MudText>
+                    <MudButton 
+                        Variant="Variant.Filled" 
+                        Color="Color.Primary" 
+                        EndIcon="@Icons.Material.Filled.Add" 
+                        OnClick="OpenAddInvestmentDialog">
+                        Add Investment
+                    </MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        @if (_isLoading)
+        {
+            <MudItem xs="12">
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+            </MudItem>
+        }
+        else if (_investments.Count == 0)
+        {
+            <MudItem xs="12">
+                <MudPaper Class="pa-12" Elevation="2">
+                    <div class="d-flex flex-column align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Primary" Size="Size.Large" Class="mb-4" />
+                        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No investments found</MudText>
+                        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-4">Add your first investment to start tracking your portfolio.</MudText>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            OnClick="OpenAddInvestmentDialog">
+                            Add Your First Investment
+                        </MudButton>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        }
+        else
+        {
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Portfolio Overview</MudText>
+                    <div class="d-flex flex-column align-center mb-4">
+                        <MudText Typo="Typo.body1">Total Value</MudText>
+                        <MudText Typo="Typo.h4">@FormatCurrency(_totalValue)</MudText>
+                        <MudText Typo="Typo.body2" Class="@(_totalGainLoss >= 0 ? "currency-positive" : "currency-negative")">
+                            @(_totalGainLoss >= 0 ? "+" : "")@FormatCurrency(_totalGainLoss) (@(_totalGainLossPercentage.ToString("0.00"))%)
+                        </MudText>
+                    </div>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="portfolioAllocationChart"></canvas>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Performance by Type</MudText>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="typePerformanceChart"></canvas>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Your Investments</MudText>
+                    <MudTable Items="_investments" Hover="true" Breakpoint="Breakpoint.Sm" T="InvestmentViewModel">
+                        <HeaderContent>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Type</MudTh>
+                            <MudTh>Institution</MudTh>
+                            <MudTh>Initial Value</MudTh>
+                            <MudTh>Current Value</MudTh>
+                            <MudTh>Gain/Loss</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Name">
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@context.Type.GetIcon()" Class="mr-2" />
+                                    <MudText>@context.Name</MudText>
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="Type">@context.Type.ToDisplayString()</MudTd>
+                            <MudTd DataLabel="Institution">@context.Institution</MudTd>
+                            <MudTd DataLabel="Initial Value">@FormatCurrency(context.InitialValue)</MudTd>
+                            <MudTd DataLabel="Current Value">@FormatCurrency(context.CurrentValue)</MudTd>
+                            <MudTd DataLabel="Gain/Loss">
+                                <div class="d-flex flex-column">
+                                    <MudText Class="@(context.GainLoss >= 0 ? "currency-positive" : "currency-negative")">
+                                        @(context.GainLoss >= 0 ? "+" : "")@FormatCurrency(context.GainLoss)
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Class="@(context.GainLossPercentage >= 0 ? "currency-positive" : "currency-negative")">
+                                        @(context.GainLossPercentage >= 0 ? "+" : "")@context.GainLossPercentage.ToString("0.00")%
+                                    </MudText>
+                                </div>
+                            </MudTd>
+                            <MudTd>
+                                <MudIconButton 
+                                    Icon="@Icons.Material.Filled.Visibility" 
+                                    Size="Size.Small" 
+                                    OnClick="@(() => NavigationManager.NavigateTo($"/investments/{context.Id}"))" />
+                                <MudIconButton 
+                                    Icon="@Icons.Material.Filled.Edit" 
+                                    Size="Size.Small" 
+                                    OnClick="@(() => OpenEditInvestmentDialog(context))" />
+                                <MudIconButton 
+                                    Icon="@Icons.Material.Filled.Delete" 
+                                    Size="Size.Small" 
+                                    OnClick="@(() => OpenDeleteInvestmentDialog(context.Id, context.Name))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<InvestmentViewModel> _investments = new();
+    private bool _isLoading = true;
+    private string _portfolioAllocationChartId = "portfolioAllocationChart";
+    private string _typePerformanceChartId = "typePerformanceChart";
+    private decimal _totalValue => _investments.Sum(i => i.CurrentValue);
+    private decimal _totalInitialValue => _investments.Sum(i => i.InitialValue);
+    private decimal _totalGainLoss => _totalValue - _totalInitialValue;
+    private decimal _totalGainLossPercentage => _totalInitialValue > 0 ? (_totalGainLoss / _totalInitialValue) * 100 : 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInvestmentsAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isLoading && _investments.Count > 0)
+        {
+            await RenderChartsAsync();
+        }
+    }
+
+    private async Task LoadInvestmentsAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            _investments = await InvestmentService.GetInvestmentsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading investments: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task RenderChartsAsync()
+    {
+        await RenderPortfolioAllocationChartAsync();
+        await RenderTypePerformanceChartAsync();
+    }
+
+    private async Task RenderPortfolioAllocationChartAsync()
+    {
+        // Group investments by type
+        var investmentsByType = _investments
+            .GroupBy(i => i.Type)
+            .Select(g => new
+            {
+                Type = g.Key.ToDisplayString(),
+                Value = g.Sum(i => i.CurrentValue),
+                Color = GetColorForInvestmentType(g.Key)
+            })
+            .OrderByDescending(g => g.Value)
+            .ToList();
+            
+        var labels = investmentsByType.Select(g => g.Type).ToArray();
+        var values = investmentsByType.Select(g => (double)g.Value).ToArray();
+        var colors = investmentsByType.Select(g => g.Color).ToArray();
+
+        var config = new
+        {
+            type = "doughnut",
+            data = new
+            {
+                labels = labels,
+                datasets = new object[]
+                {
+                    new
+                    {
+                        label = "Portfolio Allocation",
+                        data = values,
+                        backgroundColor = colors,
+                        borderColor = "white",
+                        borderWidth = 1
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                plugins = new
+                {
+                    legend = new
+                    {
+                        position = "right",
+                        labels = new
+                        {
+                            boxWidth = 15,
+                            padding = 15
+                        }
+                    },
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) + ' (' + ((context.raw / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1) + '%)'; }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _portfolioAllocationChartId, config);
+    }
+
+    private async Task RenderTypePerformanceChartAsync()
+    {
+        // Group investments by type to show performance
+        var investmentsByType = _investments
+            .GroupBy(i => i.Type)
+            .Select(g => new
+            {
+                Type = g.Key.ToDisplayString(),
+                InitialValue = g.Sum(i => i.InitialValue),
+                CurrentValue = g.Sum(i => i.CurrentValue),
+                GainLoss = g.Sum(i => i.GainLoss),
+                Color = GetColorForInvestmentType(g.Key)
+            })
+            .OrderByDescending(g => g.CurrentValue)
+            .ToList();
+            
+        var labels = investmentsByType.Select(g => g.Type).ToArray();
+        var initialValues = investmentsByType.Select(g => (double)g.InitialValue).ToArray();
+        var currentValues = investmentsByType.Select(g => (double)g.CurrentValue).ToArray();
+        var gainLoss = investmentsByType.Select(g => (double)g.GainLoss).ToArray();
+        var colors = investmentsByType.Select(g => g.Color).ToArray();
+
+        var config = new
+        {
+            type = "bar",
+            data = new
+            {
+                labels = labels,
+                datasets = new object[]
+                {
+                    new
+                    {
+                        label = "Initial Investment",
+                        data = initialValues,
+                        backgroundColor = colors.Select(c => c.Replace("1)", "0.6)")).ToArray(),
+                        borderColor = colors,
+                        borderWidth = 1
+                    },
+                    new
+                    {
+                        label = "Current Value",
+                        data = currentValues,
+                        backgroundColor = colors,
+                        borderColor = colors.Select(c => c.Replace("1)", "0.8)")).ToArray(),
+                        borderWidth = 1
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                scales = new
+                {
+                    y = new
+                    {
+                        beginAtZero = true,
+                        ticks = new
+                        {
+                            callback = "function(value) { return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
+                        }
+                    }
+                },
+                plugins = new
+                {
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.dataset.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _typePerformanceChartId, config);
+    }
+
+    private string GetColorForInvestmentType(InvestmentType type)
+    {
+        return type switch
+        {
+            InvestmentType.SAVINGS => "rgba(33, 150, 243, 1)",
+            InvestmentType.FIXED_INCOME => "rgba(76, 175, 80, 1)",
+            InvestmentType.STOCKS => "rgba(244, 67, 54, 1)",
+            InvestmentType.FUNDS => "rgba(156, 39, 176, 1)",
+            InvestmentType.REAL_ESTATE => "rgba(255, 152, 0, 1)",
+            InvestmentType.CRYPTO => "rgba(255, 87, 34, 1)",
+            InvestmentType.FOREX => "rgba(63, 81, 181, 1)",
+            InvestmentType.OTHER => "rgba(96, 125, 139, 1)",
+            _ => "rgba(158, 158, 158, 1)"
+        };
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private async Task OpenAddInvestmentDialog()
+    {
+        var parameters = new DialogParameters();
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddEditInvestmentDialog>("Add Investment", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadInvestmentsAsync();
+            await RenderChartsAsync();
+        }
+    }
+
+    private async Task OpenEditInvestmentDialog(InvestmentViewModel investment)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Investment", investment }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddEditInvestmentDialog>("Edit Investment", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadInvestmentsAsync();
+            await RenderChartsAsync();
+        }
+    }
+
+    private async Task OpenDeleteInvestmentDialog(string investmentId, string investmentName)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the investment '{investmentName}'? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Delete Investment", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteInvestmentAsync(investmentId);
+        }
+    }
+
+    private async Task DeleteInvestmentAsync(string investmentId)
+    {
+        try
+        {
+            await InvestmentService.DeleteInvestmentAsync(investmentId);
+            Snackbar.Add("Investment deleted successfully", Severity.Success);
+            await LoadInvestmentsAsync();
+            await RenderChartsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting investment: {ex.Message}", Severity.Error);
+        }
+    }
+
+    public class AddEditInvestmentDialog : ComponentBase
+    {
+        [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+        [Parameter] public InvestmentViewModel Investment { get; set; }
+
+        private bool _isEdit => Investment != null;
+        private InvestmentFormModel _model = new();
+        private bool _isValid;
+        private bool _isBusy;
+        private string[] _errors = { };
+        private MudForm _form;
+
+        [Inject] private IInvestmentService InvestmentService { get; set; }
+        [Inject] private ISnackbar Snackbar { get; set; }
+
+        protected override void OnInitialized()
+        {
+            if (_isEdit)
+            {
+                _model = new InvestmentFormModel
+                {
+                    Name = Investment.Name,
+                    Type = Investment.Type,
+                    Institution = Investment.Institution,
+                    InitialValue = Investment.InitialValue,
+                    CurrentValue = Investment.CurrentValue,
+                    AcquisitionDate = Investment.AcquisitionDate,
+                    Profitability = Investment.Profitability,
+                    Risk = Investment.Risk,
+                    LiquidityDays = Investment.LiquidityDays,
+                    MaturityDate = Investment.MaturityDate,
+                    Notes = Investment.Notes,
+                    IsActive = Investment.IsActive
+                };
+            }
+            else
+            {
+                _model.AcquisitionDate = DateTime.Today;
+                _model.IsActive = true;
+            }
+        }
+
+        private async Task SubmitAsync()
+        {
+            if (!_isValid)
+            {
+                Snackbar.Add("Please fill in all required fields", Severity.Warning);
+                return;
+            }
+
+            try
+            {
+                _isBusy = true;
+
+                if (_isEdit)
+                {
+                    await InvestmentService.UpdateInvestmentAsync(Investment.Id, _model);
+                    Snackbar.Add("Investment updated successfully", Severity.Success);
+                }
+                else
+                {
+                    await InvestmentService.CreateInvestmentAsync(_model);
+                    Snackbar.Add("Investment created successfully", Severity.Success);
+                }
+                
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error saving investment: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
+        private void Cancel() => MudDialog.Cancel();
+    }
+
+    public void Dispose()
+    {
+        if (!_isLoading && _investments.Count > 0)
+        {
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _portfolioAllocationChartId);
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _typePerformanceChartId);
+        }
+    }
+}

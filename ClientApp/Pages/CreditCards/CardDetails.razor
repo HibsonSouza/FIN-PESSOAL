@@ -1,0 +1,657 @@
+@page "/credit-cards/{Id}"
+@attribute [Authorize]
+@inject ICreditCardService CreditCardService
+@inject IDialogService DialogService
+@inject ITransactionService TransactionService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Card Details - Finance Manager</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+}
+else if (_card == null)
+{
+    <MudAlert Severity="Severity.Error" Class="my-4">Credit card not found</MudAlert>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/credit-cards"))">
+        Back to Credit Cards
+    </MudButton>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.False">
+        <MudGrid>
+            <MudItem xs="12">
+                <div class="d-flex flex-column flex-md-row justify-space-between align-md-center mb-4">
+                    <div class="d-flex align-center mb-4 mb-md-0">
+                        <MudAvatar Color="Color.Primary" Style="@($"background-color: {_card.Color}")" Class="mr-3" Size="Size.Large">
+                            <MudIcon Icon="@(string.IsNullOrEmpty(_card.IconName) ? Icons.Material.Filled.CreditCard : _card.IconName)" />
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.h4">@_card.Name</MudText>
+                            @if (!string.IsNullOrEmpty(_card.LastFourDigits))
+                            {
+                                <MudText Typo="Typo.subtitle1">**** @_card.LastFourDigits</MudText>
+                            }
+                            else if (!string.IsNullOrEmpty(_card.Bank))
+                            {
+                                <MudText Typo="Typo.subtitle1">@_card.Bank</MudText>
+                            }
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <MudButton 
+                            Variant="Variant.Outlined" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.Edit" 
+                            OnClick="@(() => NavigationManager.NavigateTo($"/credit-cards/edit/{Id}"))"
+                            Class="mr-2">
+                            Edit
+                        </MudButton>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            StartIcon="@Icons.Material.Filled.Add" 
+                            OnClick="OpenAddTransactionDialog">
+                            Add Transaction
+                        </MudButton>
+                    </div>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="mb-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Card Summary</MudText>
+                        <MudList Dense="true">
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Credit Limit</span>
+                                    <strong>@FormatCurrency(_card.Limit)</strong>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Current Balance</span>
+                                    <strong class="currency-negative">@FormatCurrency(_card.CurrentBalance)</strong>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Available Credit</span>
+                                    <strong>@FormatCurrency(_card.AvailableLimit)</strong>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <div class="w-100">
+                                    <MudText Typo="Typo.caption">Credit Utilization</MudText>
+                                    <MudProgressLinear 
+                                        Value="@CalculateUsedPercentage()" 
+                                        Color="@GetProgressColor()" 
+                                        Class="my-1" />
+                                    <MudText Typo="Typo.caption" Align="Align.Right">@CalculateUsedPercentage()% Used</MudText>
+                                </div>
+                            </MudListItem>
+                            <MudDivider Class="my-2" />
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Closing Day</span>
+                                    <span>@_card.ClosingDay of each month</span>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Due Day</span>
+                                    <span>@_card.DueDay of each month</span>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Next Due Date</span>
+                                    <MudChip Size="Size.Small" Color="Color.Warning">
+                                        @GetNextDueDate().ToShortDateString() (@GetDaysUntilDue() days)
+                                    </MudChip>
+                                </MudText>
+                            </MudListItem>
+                            <MudListItem>
+                                <MudText Typo="Typo.body1" Class="d-flex justify-space-between">
+                                    <span>Status</span>
+                                    <MudChip Color="@(_card.IsActive ? Color.Success : Color.Error)" Size="Size.Small">
+                                        @(_card.IsActive ? "Active" : "Inactive")
+                                    </MudChip>
+                                </MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+
+                @if (_card.ActiveInstallments.Count > 0)
+                {
+                    <MudCard Elevation="2" Class="mb-4">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" Class="mb-4">Active Installments</MudText>
+                            <MudList Dense="true">
+                                @foreach (var installment in _card.ActiveInstallments)
+                                {
+                                    <MudListItem>
+                                        <div class="d-flex justify-space-between align-center w-100">
+                                            <div>
+                                                <MudText Typo="Typo.body1">@installment.Description</MudText>
+                                                <MudText Typo="Typo.caption">
+                                                    @installment.CurrentInstallment of @installment.TotalInstallments installments
+                                                </MudText>
+                                            </div>
+                                            <MudText Typo="Typo.body1" Class="currency-negative">
+                                                @FormatCurrency(installment.InstallmentAmount)
+                                            </MudText>
+                                        </div>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </MudCardContent>
+                    </MudCard>
+                }
+
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-4">Monthly Expenses</MudText>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="monthlyExpensesChart"></canvas>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="8">
+                <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+                    <MudTabPanel Text="Current Statement">
+                        @if (_card.RecentBills.Count > 0)
+                        {
+                            <MudCard Elevation="0" Class="mb-4">
+                                <MudCardContent>
+                                    <div class="d-flex justify-space-between align-center mb-4">
+                                        <div>
+                                            <MudText Typo="Typo.h6">Current Bill</MudText>
+                                            <MudText Typo="Typo.caption">
+                                                Closing: @_currentBill.ClosingDate.ToShortDateString() | 
+                                                Due: @_currentBill.DueDate.ToShortDateString()
+                                            </MudText>
+                                        </div>
+                                        <div>
+                                            <MudText Typo="Typo.h6" Class="currency-negative">@FormatCurrency(_currentBill.TotalAmount)</MudText>
+                                            <MudChip Size="Size.Small" Color="@(_currentBill.IsPaid ? Color.Success : Color.Warning)" Class="ml-2">
+                                                @(_currentBill.IsPaid ? "Paid" : "Unpaid")
+                                            </MudChip>
+                                        </div>
+                                    </div>
+
+                                    @if (!_currentBill.IsPaid)
+                                    {
+                                        <MudButton 
+                                            Variant="Variant.Filled" 
+                                            Color="Color.Primary" 
+                                            StartIcon="@Icons.Material.Filled.Payment" 
+                                            OnClick="@(() => OpenMarkAsPaidDialog(_currentBill))"
+                                            FullWidth="true"
+                                            Class="mb-4">
+                                            Mark as Paid
+                                        </MudButton>
+                                    }
+
+                                    @if (_currentBill.Transactions.Count == 0)
+                                    {
+                                        <MudText Typo="Typo.body1" Align="Align.Center" Class="my-4">No transactions in current statement.</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudTable Items="_currentBill.Transactions" Hover="true" Breakpoint="Breakpoint.Sm" T="TransactionViewModel">
+                                            <HeaderContent>
+                                                <MudTh>Date</MudTh>
+                                                <MudTh>Description</MudTh>
+                                                <MudTh>Category</MudTh>
+                                                <MudTh Style="text-align: right">Amount</MudTh>
+                                            </HeaderContent>
+                                            <RowTemplate>
+                                                <MudTd DataLabel="Date">@context.Date.ToShortDateString()</MudTd>
+                                                <MudTd DataLabel="Description">@context.Description</MudTd>
+                                                <MudTd DataLabel="Category">
+                                                    @if (!string.IsNullOrEmpty(context.CategoryName))
+                                                    {
+                                                        <MudChip Size="Size.Small" Color="Color.Error" Label="true">
+                                                            @context.CategoryName
+                                                        </MudChip>
+                                                    }
+                                                </MudTd>
+                                                <MudTd DataLabel="Amount" Style="text-align: right">
+                                                    <MudText Class="currency-negative">@FormatCurrency(context.Amount)</MudText>
+                                                </MudTd>
+                                            </RowTemplate>
+                                        </MudTable>
+                                    }
+                                </MudCardContent>
+                            </MudCard>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Info" Class="my-4">No current statement found.</MudAlert>
+                        }
+                    </MudTabPanel>
+                    <MudTabPanel Text="Recent Transactions">
+                        <div class="d-flex justify-space-between align-center mb-4">
+                            <MudText Typo="Typo.h6">Recent Transactions</MudText>
+                            <MudDateRangePicker 
+                                @bind-DateRange="_dateRange" 
+                                Label="Date Range" 
+                                Variant="Variant.Outlined" 
+                                AdornmentColor="Color.Primary"
+                                Style="width: 300px;"
+                                Class="mr-2" />
+                        </div>
+
+                        @if (_transactions.Count == 0)
+                        {
+                            <MudText Typo="Typo.body1" Align="Align.Center" Class="my-4">No transactions found for this card.</MudText>
+                        }
+                        else
+                        {
+                            <MudTable Items="_transactions" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_isTransactionsLoading" 
+                                     LoadingProgressColor="Color.Primary" SortLabel="Sort By">
+                                <HeaderContent>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<TransactionViewModel, object>(x => x.Date)">Date</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<TransactionViewModel, object>(x => x.Description)">Description</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<TransactionViewModel, object>(x => x.CategoryName)">Category</MudTableSortLabel></MudTh>
+                                    <MudTh><MudTableSortLabel SortBy="new Func<TransactionViewModel, object>(x => x.Amount)">Amount</MudTableSortLabel></MudTh>
+                                    <MudTh>Actions</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Date">@context.Date.ToShortDateString()</MudTd>
+                                    <MudTd DataLabel="Description">@context.Description</MudTd>
+                                    <MudTd DataLabel="Category">
+                                        @if (!string.IsNullOrEmpty(context.CategoryName))
+                                        {
+                                            <MudChip Size="Size.Small" Color="Color.Error" Label="true">
+                                                @context.CategoryName
+                                            </MudChip>
+                                        }
+                                    </MudTd>
+                                    <MudTd DataLabel="Amount">
+                                        <MudText Class="currency-negative">@FormatCurrency(context.Amount)</MudText>
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudIconButton 
+                                            Icon="@Icons.Material.Filled.Edit" 
+                                            Size="Size.Small" 
+                                            OnClick="@(() => OpenEditTransactionDialog(context))" />
+                                        <MudIconButton 
+                                            Icon="@Icons.Material.Filled.Delete" 
+                                            Size="Size.Small" 
+                                            OnClick="@(() => OpenDeleteTransactionDialog(context.Id, context.Description))" />
+                                    </MudTd>
+                                </RowTemplate>
+                                <PagerContent>
+                                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                                </PagerContent>
+                            </MudTable>
+                        }
+                    </MudTabPanel>
+                    <MudTabPanel Text="Past Statements">
+                        @if (_card.RecentBills.Count <= 1)
+                        {
+                            <MudAlert Severity="Severity.Info" Class="my-4">No past statements found.</MudAlert>
+                        }
+                        else
+                        {
+                            <MudList Dense="false">
+                                @foreach (var bill in _card.RecentBills.Where(b => b.Id != _currentBill.Id).OrderByDescending(b => b.DueDate))
+                                {
+                                    <MudListItem>
+                                        <MudPaper Class="pa-4" Elevation="1">
+                                            <div class="d-flex justify-space-between align-center">
+                                                <div>
+                                                    <MudText Typo="Typo.h6">Statement for @bill.DueDate.ToString("MMMM yyyy")</MudText>
+                                                    <MudText Typo="Typo.caption">
+                                                        Closing: @bill.ClosingDate.ToShortDateString() | 
+                                                        Due: @bill.DueDate.ToShortDateString()
+                                                    </MudText>
+                                                </div>
+                                                <div>
+                                                    <MudText Typo="Typo.h6" Class="currency-negative">@FormatCurrency(bill.TotalAmount)</MudText>
+                                                    <MudChip Size="Size.Small" Color="@(bill.IsPaid ? Color.Success : Color.Error)" Class="ml-2">
+                                                        @(bill.IsPaid ? "Paid" : "Unpaid")
+                                                    </MudChip>
+                                                </div>
+                                            </div>
+                                        </MudPaper>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        }
+                    </MudTabPanel>
+                </MudTabs>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private CreditCardViewModel _card;
+    private List<TransactionViewModel> _transactions = new();
+    private bool _isLoading = true;
+    private bool _isTransactionsLoading = false;
+    private DateRange _dateRange = new(DateTime.Now.AddMonths(-1), DateTime.Now);
+    private string _monthlyExpensesChartId = "monthlyExpensesChart";
+    private CreditCardBillViewModel _currentBill = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            _card = await CreditCardService.GetCreditCardByIdAsync(Id);
+            
+            if (_card.RecentBills.Count > 0)
+            {
+                _currentBill = _card.RecentBills.OrderByDescending(b => b.DueDate).First();
+            }
+            
+            await LoadTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading credit card: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _card != null)
+        {
+            await RenderMonthlyExpensesChartAsync();
+        }
+    }
+
+    private async Task LoadTransactionsAsync()
+    {
+        try
+        {
+            _isTransactionsLoading = true;
+            
+            var filter = new TransactionFilterModel
+            {
+                StartDate = _dateRange.Start,
+                EndDate = _dateRange.End,
+                Type = TransactionType.EXPENSE,
+                CreditCardId = Id
+            };
+            
+            _transactions = await TransactionService.GetTransactionsAsync(filter);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading transactions: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isTransactionsLoading = false;
+        }
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private double CalculateUsedPercentage()
+    {
+        if (_card.Limit <= 0) return 0;
+        return Math.Round((double)(_card.CurrentBalance / _card.Limit * 100), 1);
+    }
+
+    private Color GetProgressColor()
+    {
+        var percentage = CalculateUsedPercentage();
+        
+        if (percentage < 50)
+            return Color.Success;
+        if (percentage < 75)
+            return Color.Warning;
+        return Color.Error;
+    }
+
+    private DateTime GetNextDueDate()
+    {
+        var today = DateTime.Today;
+        var dueDate = new DateTime(today.Year, today.Month, _card.DueDay);
+        
+        if (dueDate < today)
+        {
+            dueDate = dueDate.AddMonths(1);
+        }
+        
+        return dueDate;
+    }
+
+    private int GetDaysUntilDue()
+    {
+        var dueDate = GetNextDueDate();
+        return (dueDate - DateTime.Today).Days;
+    }
+
+    private async Task OpenAddTransactionDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "CreditCardId", Id }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<Pages.Transactions.AddEditTransaction>("Add Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            _card = await CreditCardService.GetCreditCardByIdAsync(Id);
+            
+            if (_card.RecentBills.Count > 0)
+            {
+                _currentBill = _card.RecentBills.OrderByDescending(b => b.DueDate).First();
+            }
+            
+            await LoadTransactionsAsync();
+            await RenderMonthlyExpensesChartAsync();
+        }
+    }
+
+    private async Task OpenEditTransactionDialog(TransactionViewModel transaction)
+    {
+        var parameters = new DialogParameters
+        {
+            { "TransactionId", transaction.Id }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<Pages.Transactions.AddEditTransaction>("Edit Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            _card = await CreditCardService.GetCreditCardByIdAsync(Id);
+            
+            if (_card.RecentBills.Count > 0)
+            {
+                _currentBill = _card.RecentBills.OrderByDescending(b => b.DueDate).First();
+            }
+            
+            await LoadTransactionsAsync();
+            await RenderMonthlyExpensesChartAsync();
+        }
+    }
+
+    private async Task OpenDeleteTransactionDialog(string transactionId, string description)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the transaction '{description}'? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Delete Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteTransactionAsync(transactionId);
+        }
+    }
+
+    private async Task DeleteTransactionAsync(string transactionId)
+    {
+        try
+        {
+            await TransactionService.DeleteTransactionAsync(transactionId);
+            Snackbar.Add("Transaction deleted successfully", Severity.Success);
+            
+            _card = await CreditCardService.GetCreditCardByIdAsync(Id);
+            
+            if (_card.RecentBills.Count > 0)
+            {
+                _currentBill = _card.RecentBills.OrderByDescending(b => b.DueDate).First();
+            }
+            
+            await LoadTransactionsAsync();
+            await RenderMonthlyExpensesChartAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting transaction: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenMarkAsPaidDialog(CreditCardBillViewModel bill)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Mark this bill of {FormatCurrency(bill.TotalAmount)} as paid?" },
+            { "ButtonText", "Mark as Paid" },
+            { "Color", Color.Success }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Mark Bill as Paid", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await MarkBillAsPaidAsync(bill.Id);
+        }
+    }
+
+    private async Task MarkBillAsPaidAsync(string billId)
+    {
+        try
+        {
+            await CreditCardService.MarkBillAsPaidAsync(billId);
+            Snackbar.Add("Bill marked as paid successfully", Severity.Success);
+            
+            _card = await CreditCardService.GetCreditCardByIdAsync(Id);
+            
+            if (_card.RecentBills.Count > 0)
+            {
+                _currentBill = _card.RecentBills.OrderByDescending(b => b.DueDate).First();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error marking bill as paid: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RenderMonthlyExpensesChartAsync()
+    {
+        // Calculate monthly expenses for the last 6 months
+        var today = DateTime.Today;
+        var monthlyExpenses = new decimal[6];
+        var labels = new string[6];
+        
+        for (int i = 0; i < 6; i++)
+        {
+            var date = today.AddMonths(-5 + i);
+            var monthStart = new DateTime(date.Year, date.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            
+            labels[i] = date.ToString("MMM yy");
+            monthlyExpenses[i] = _transactions
+                .Where(t => t.Date >= monthStart && t.Date <= monthEnd)
+                .Sum(t => t.Amount);
+        }
+
+        var config = new
+        {
+            type = "bar",
+            data = new
+            {
+                labels = labels,
+                datasets = new object[]
+                {
+                    new
+                    {
+                        label = "Monthly Expenses",
+                        data = monthlyExpenses,
+                        backgroundColor = "rgba(244, 67, 54, 0.7)",
+                        borderColor = "rgba(244, 67, 54, 1)",
+                        borderWidth = 1
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                scales = new
+                {
+                    y = new
+                    {
+                        beginAtZero = true,
+                        ticks = new
+                        {
+                            callback = "function(value) { return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
+                        }
+                    }
+                },
+                plugins = new
+                {
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.dataset.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _monthlyExpensesChartId, config);
+    }
+
+    public void Dispose()
+    {
+        if (_card != null)
+        {
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _monthlyExpensesChartId);
+        }
+    }
+}

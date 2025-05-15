@@ -1,0 +1,199 @@
+@page "/accounts"
+@attribute [Authorize]
+@inject IAccountService AccountService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Accounts - Finance Manager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudText Typo="Typo.h4" Class="mb-4">Accounts</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.h6">Your Accounts</MudText>
+                    <MudButton 
+                        Variant="Variant.Filled" 
+                        Color="Color.Primary" 
+                        EndIcon="@Icons.Material.Filled.Add" 
+                        OnClick="@(() => NavigationManager.NavigateTo("/accounts/add"))">
+                        Add Account
+                    </MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        @if (_isLoading)
+        {
+            <MudItem xs="12">
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+            </MudItem>
+        }
+        else if (_accounts.Count == 0)
+        {
+            <MudItem xs="12">
+                <MudPaper Class="pa-12" Elevation="2">
+                    <div class="d-flex flex-column align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Primary" Size="Size.Large" Class="mb-4" />
+                        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No accounts found</MudText>
+                        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-4">Add your first account to start tracking your finances.</MudText>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            OnClick="@(() => NavigationManager.NavigateTo("/accounts/add"))">
+                            Add Your First Account
+                        </MudButton>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        }
+        else
+        {
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mb-2">Total Balance: @FormatCurrency(_totalBalance)</MudText>
+            </MudItem>
+
+            @foreach (var account in _accounts)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Class="dashboard-card" @onclick="@(() => NavigationManager.NavigateTo($"/accounts/{account.Id}"))">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary" Style="@($"background-color: {account.Color}")">
+                                    <MudIcon Icon="@account.IconName" />
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">@account.Name</MudText>
+                                <MudText Typo="Typo.caption">@account.Type.ToDisplayString()</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                    <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo($"/accounts/{account.Id}"))">View</MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => NavigationManager.NavigateTo($"/accounts/edit/{account.Id}"))">Edit</MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenDeleteDialog(account.Id, account.Name))">Delete</MudMenuItem>
+                                </MudMenu>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudList Dense="true">
+                                <MudListItem>
+                                    <MudText Typo="Typo.body1"><strong>Balance:</strong> @FormatCurrency(account.Balance)</MudText>
+                                </MudListItem>
+                                @if (!string.IsNullOrEmpty(account.Institution))
+                                {
+                                    <MudListItem>
+                                        <MudText Typo="Typo.body1"><strong>Institution:</strong> @account.Institution</MudText>
+                                    </MudListItem>
+                                }
+                                @if (!string.IsNullOrEmpty(account.AccountNumber))
+                                {
+                                    <MudListItem>
+                                        <MudText Typo="Typo.body1">
+                                            <strong>Account:</strong> @(MaskAccountNumber(account.AccountNumber))
+                                        </MudText>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => NavigateToAddTransaction(account.Id))" Class="ml-auto">
+                                Add Transaction
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<AccountViewModel> _accounts = new();
+    private bool _isLoading = true;
+    private decimal _totalBalance => _accounts.Where(a => a.IncludeInTotal).Sum(a => a.Balance);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccountsAsync();
+    }
+
+    private async Task LoadAccountsAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            _accounts = await AccountService.GetAccountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading accounts: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OpenDeleteDialog(string accountId, string accountName)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the account '{accountName}'? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Delete Account", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteAccountAsync(accountId);
+        }
+    }
+
+    private async Task DeleteAccountAsync(string accountId)
+    {
+        try
+        {
+            await AccountService.DeleteAccountAsync(accountId);
+            Snackbar.Add("Account deleted successfully", Severity.Success);
+            await LoadAccountsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting account: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private string MaskAccountNumber(string accountNumber)
+    {
+        if (string.IsNullOrEmpty(accountNumber) || accountNumber.Length <= 4)
+            return accountNumber;
+
+        var last4 = accountNumber.Substring(accountNumber.Length - 4);
+        var stars = new string('*', accountNumber.Length - 4);
+        return $"{stars}{last4}";
+    }
+
+    private void NavigateToAddTransaction(string accountId)
+    {
+        var parameters = new DialogParameters
+        {
+            { "AccountId", accountId }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        DialogService.Show<Pages.Transactions.AddEditTransaction>("Add Transaction", parameters, options);
+    }
+}

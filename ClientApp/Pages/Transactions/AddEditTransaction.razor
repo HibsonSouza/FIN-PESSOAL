@@ -1,0 +1,384 @@
+@page "/transactions/add"
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject ICategoryService CategoryService
+@inject ICreditCardService CreditCardService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        @if (_isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+        }
+        else
+        {
+            <MudForm @ref="_form" Model="@_model" @bind-IsValid="@_isValid" @bind-Errors="@_errors">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudSelect 
+                            @bind-Value="_model.Type" 
+                            Label="Transaction Type" 
+                            Required="true" 
+                            RequiredError="Transaction type is required"
+                            Variant="Variant.Outlined"
+                            Class="mb-4">
+                            @foreach (TransactionType type in Enum.GetValues(typeof(TransactionType)))
+                            {
+                                <MudSelectItem Value="@type">
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@type.GetIcon()" Class="mr-2" />
+                                        @type.ToDisplayString()
+                                    </div>
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField 
+                            @bind-Value="_model.Description" 
+                            Label="Description" 
+                            Required="true" 
+                            RequiredError="Description is required"
+                            Counter="100"
+                            MaxLength="100"
+                            Variant="Variant.Outlined"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField 
+                            @bind-Value="_model.Amount" 
+                            Label="Amount" 
+                            Required="true" 
+                            RequiredError="Amount is required"
+                            Min="0.01"
+                            Variant="Variant.Outlined"
+                            Class="mb-4"
+                            Format="F2"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                            AdornmentColor="Color.Primary"
+                            HideSpinButtons="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker 
+                            @bind-Date="_model.Date" 
+                            Label="Date" 
+                            Required="true" 
+                            RequiredError="Date is required"
+                            Variant="Variant.Outlined"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudSelect 
+                            @bind-Value="_model.CategoryId" 
+                            Label="Category" 
+                            Variant="Variant.Outlined"
+                            Class="mb-4"
+                            AnchorOrigin="Origin.BottomCenter">
+                            <MudSelectItem Value="@string.Empty">No Category</MudSelectItem>
+                            @foreach (var category in _categories.Where(c => c.Type == _model.Type))
+                            {
+                                <MudSelectItem Value="@category.Id">@category.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    @if (_model.Type == TransactionType.TRANSFER)
+                    {
+                        <MudItem xs="12" md="6">
+                            <MudSelect 
+                                @bind-Value="_model.AccountId" 
+                                Label="From Account" 
+                                Required="true" 
+                                RequiredError="From account is required"
+                                Variant="Variant.Outlined"
+                                Class="mb-4"
+                                AnchorOrigin="Origin.BottomCenter">
+                                @foreach (var account in _accounts)
+                                {
+                                    <MudSelectItem Value="@account.Id">@account.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" md="6">
+                            <MudSelect 
+                                @bind-Value="_model.ToAccountId" 
+                                Label="To Account" 
+                                Required="true" 
+                                RequiredError="To account is required"
+                                Variant="Variant.Outlined"
+                                Class="mb-4"
+                                AnchorOrigin="Origin.BottomCenter">
+                                @foreach (var account in _accounts.Where(a => a.Id != _model.AccountId))
+                                {
+                                    <MudSelectItem Value="@account.Id">@account.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                    }
+                    else
+                    {
+                        <MudItem xs="12" md="6">
+                            <MudSelect 
+                                @bind-Value="_model.AccountId" 
+                                Label="Account" 
+                                Required="true" 
+                                RequiredError="Account is required"
+                                Variant="Variant.Outlined"
+                                Class="mb-4"
+                                AnchorOrigin="Origin.BottomCenter">
+                                @foreach (var account in _accounts)
+                                {
+                                    <MudSelectItem Value="@account.Id">@account.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        @if (_model.Type == TransactionType.EXPENSE)
+                        {
+                            <MudItem xs="12" md="6">
+                                <MudSelect 
+                                    T="string" 
+                                    @bind-Value="_model.CreditCardId" 
+                                    Label="Credit Card (optional)" 
+                                    Variant="Variant.Outlined"
+                                    Class="mb-4"
+                                    AnchorOrigin="Origin.BottomCenter">
+                                    <MudSelectItem Value="@string.Empty">No Credit Card</MudSelectItem>
+                                    @foreach (var card in _creditCards)
+                                    {
+                                        <MudSelectItem Value="@card.Id">@card.Name</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                        }
+                    }
+
+                    @if (_model.Type == TransactionType.EXPENSE && !string.IsNullOrEmpty(_model.CreditCardId))
+                    {
+                        <MudItem xs="12" md="6">
+                            <MudCheckBox 
+                                @bind-Checked="_model.IsInstallment"
+                                Label="Is Installment Purchase"
+                                Color="Color.Primary" 
+                                Class="mb-4" />
+                        </MudItem>
+
+                        @if (_model.IsInstallment)
+                        {
+                            <MudItem xs="12" md="6">
+                                <MudNumericField 
+                                    @bind-Value="_model.TotalInstallments" 
+                                    Label="Number of Installments" 
+                                    Required="true" 
+                                    RequiredError="Number of installments is required"
+                                    Min="2"
+                                    Max="99"
+                                    Variant="Variant.Outlined"
+                                    Class="mb-4"
+                                    HideSpinButtons="false" />
+                            </MudItem>
+                        }
+                    }
+
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox 
+                            @bind-Checked="_model.IsReconciled"
+                            Label="Reconciled"
+                            Color="Color.Primary" 
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudExpansionPanel>
+                            <TitleContent>
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.MoreVert" Class="mr-2" />
+                                    <MudText>Additional Details</MudText>
+                                </div>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudGrid>
+                                    <MudItem xs="12">
+                                        <MudTextField 
+                                            @bind-Value="_model.Notes" 
+                                            Label="Notes" 
+                                            Variant="Variant.Outlined"
+                                            Lines="3"
+                                            Class="mb-4" />
+                                    </MudItem>
+
+                                    <MudItem xs="12" md="6">
+                                        <MudTextField 
+                                            @bind-Value="_model.Location" 
+                                            Label="Location" 
+                                            Variant="Variant.Outlined"
+                                            Class="mb-4" />
+                                    </MudItem>
+
+                                    <MudItem xs="12" md="6">
+                                        <MudTextField 
+                                            @bind-Value="_model.Tags" 
+                                            Label="Tags (comma separated)" 
+                                            Variant="Variant.Outlined"
+                                            Class="mb-4" />
+                                    </MudItem>
+                                </MudGrid>
+                            </ChildContent>
+                        </MudExpansionPanel>
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Disabled="@(!_isValid || _isBusy)" OnClick="Submit">
+            @if (_isBusy)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Processing</MudText>
+            }
+            else
+            {
+                @(_isEditing ? "Update" : "Add")
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    
+    [Parameter] public string TransactionId { get; set; }
+    [Parameter] public string AccountId { get; set; }
+
+    private bool _isEditing => !string.IsNullOrEmpty(TransactionId);
+    private bool _isLoading = true;
+    private bool _isBusy = false;
+    private bool _isValid = false;
+    private string[] _errors = { };
+    private MudForm _form;
+    
+    private TransactionFormModel _model = new();
+    private List<AccountViewModel> _accounts = new();
+    private List<CategoryViewModel> _categories = new();
+    private List<CreditCardViewModel> _creditCards = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+
+            // Load reference data
+            var accountsTask = AccountService.GetAccountsAsync();
+            var categoriesTask = CategoryService.GetCategoriesAsync();
+            var creditCardsTask = CreditCardService.GetCreditCardsAsync();
+            
+            await Task.WhenAll(accountsTask, categoriesTask, creditCardsTask);
+            
+            _accounts = await accountsTask;
+            _categories = await categoriesTask;
+            _creditCards = await creditCardsTask;
+
+            if (_isEditing)
+            {
+                var transaction = await TransactionService.GetTransactionByIdAsync(TransactionId);
+                _model = new TransactionFormModel
+                {
+                    Amount = transaction.Amount,
+                    Description = transaction.Description,
+                    Date = transaction.Date,
+                    Type = transaction.Type,
+                    CategoryId = transaction.CategoryId ?? string.Empty,
+                    AccountId = transaction.AccountId,
+                    IsReconciled = transaction.IsReconciled,
+                    Notes = transaction.Notes,
+                    Location = transaction.Location,
+                    Tags = transaction.Tags,
+                    CreditCardId = transaction.CreditCardId ?? string.Empty
+                };
+                
+                // If it's a transfer, we need to handle the special case
+                if (transaction.Type == TransactionType.TRANSFER)
+                {
+                    // This is a simplified approach. In a real app, you'd need to look up the related transaction
+                    _model.ToAccountId = _accounts.FirstOrDefault(a => a.Id != transaction.AccountId)?.Id ?? string.Empty;
+                }
+            }
+            else
+            {
+                // Set defaults for new transaction
+                _model.Date = DateTime.Today;
+                _model.Type = TransactionType.EXPENSE;
+                
+                // If an account was specified (e.g. from account details), select it
+                if (!string.IsNullOrEmpty(AccountId))
+                {
+                    _model.AccountId = AccountId;
+                }
+                else if (_accounts.Any())
+                {
+                    _model.AccountId = _accounts.First().Id;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        if (!_isValid)
+        {
+            Snackbar.Add("Please fill in all required fields", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isBusy = true;
+
+            if (_isEditing)
+            {
+                await TransactionService.UpdateTransactionAsync(TransactionId, _model);
+                Snackbar.Add("Transaction updated successfully", Severity.Success);
+            }
+            else
+            {
+                await TransactionService.CreateTransactionAsync(_model);
+                Snackbar.Add("Transaction added successfully", Severity.Success);
+            }
+            
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving transaction: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

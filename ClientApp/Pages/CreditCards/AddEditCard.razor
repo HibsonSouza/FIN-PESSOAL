@@ -1,0 +1,324 @@
+@page "/credit-cards/add"
+@page "/credit-cards/edit/{Id}"
+@attribute [Authorize]
+@inject ICreditCardService CreditCardService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_isEditing ? "Edit Credit Card" : "Add Credit Card") - Finance Manager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h5" Class="mb-4">@(_isEditing ? "Edit Credit Card" : "New Credit Card")</MudText>
+
+        @if (_isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+        }
+        else
+        {
+            <MudForm @ref="_form" Model="@_model" @bind-IsValid="@_isValid" @bind-Errors="@_errors">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField 
+                            @bind-Value="_model.Name" 
+                            Label="Card Name" 
+                            Required="true" 
+                            RequiredError="Card name is required"
+                            Counter="50"
+                            Immediate="true"
+                            MaxLength="50"
+                            Variant="Variant.Outlined"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField 
+                            @bind-Value="_model.LastFourDigits" 
+                            Label="Last 4 Digits" 
+                            Variant="Variant.Outlined"
+                            Counter="4"
+                            MaxLength="4"
+                            InputType="InputType.Number"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField 
+                            @bind-Value="_model.Bank" 
+                            Label="Bank/Issuer" 
+                            Variant="Variant.Outlined"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField 
+                            @bind-Value="_model.Limit" 
+                            Label="Credit Limit" 
+                            Required="true" 
+                            RequiredError="Credit limit is required"
+                            Min="0"
+                            Variant="Variant.Outlined"
+                            Class="mb-4"
+                            Format="F2"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                            AdornmentColor="Color.Primary"
+                            HideSpinButtons="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField 
+                            @bind-Value="_model.CurrentBalance" 
+                            Label="Current Balance" 
+                            Min="0"
+                            Variant="Variant.Outlined"
+                            Class="mb-4"
+                            Format="F2"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                            AdornmentColor="Color.Primary"
+                            HideSpinButtons="true" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField 
+                            @bind-Value="_model.ClosingDay" 
+                            Label="Statement Closing Day" 
+                            Required="true" 
+                            RequiredError="Closing day is required"
+                            Min="1"
+                            Max="31"
+                            Variant="Variant.Outlined"
+                            Class="mb-4"
+                            HideSpinButtons="false" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField 
+                            @bind-Value="_model.DueDay" 
+                            Label="Payment Due Day" 
+                            Required="true" 
+                            RequiredError="Due day is required"
+                            Min="1"
+                            Max="31"
+                            Variant="Variant.Outlined"
+                            Class="mb-4"
+                            HideSpinButtons="false" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField 
+                            @bind-Value="_model.IconName" 
+                            Label="Icon" 
+                            Variant="Variant.Outlined"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@_model.IconName"
+                            ReadOnly="true"
+                            Class="mb-4"
+                            OnClick="@OpenIconPicker" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudColorPicker 
+                            @bind-Value="_colorValue"
+                            Label="Color" 
+                            Variant="Variant.Outlined"
+                            DisableToolbar="true"
+                            DisablePreview="true"
+                            DisableModeSwitch="true"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudCheckBox 
+                            @bind-Checked="_model.IsActive"
+                            Label="Active"
+                            Color="Color.Primary" 
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" Class="d-flex justify-end">
+                        <MudButton 
+                            Variant="Variant.Text" 
+                            Color="Color.Secondary" 
+                            OnClick="GoBack" 
+                            Class="mr-2">
+                            Cancel
+                        </MudButton>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            OnClick="SubmitForm"
+                            Disabled="@(!_isValid || _isBusy)">
+                            @if (_isBusy)
+                            {
+                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                                <MudText Class="ms-2">Processing</MudText>
+                            }
+                            else
+                            {
+                                @(_isEditing ? "Update" : "Create")
+                            }
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        }
+    </MudPaper>
+</MudContainer>
+
+<MudDialog @bind-IsVisible="_isIconPickerOpen" Options="new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Select Icon</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            @foreach (var icon in _availableIcons)
+            {
+                <MudItem xs="3" sm="2">
+                    <MudPaper 
+                        Elevation="2" 
+                        Class="pa-4 d-flex justify-center cursor-pointer" 
+                        Style="@($"background-color: {(_model.IconName == icon ? _colorValue : "transparent")}")"
+                        @onclick="() => SelectIcon(icon)">
+                        <MudIcon Icon="@icon" Size="Size.Large" Color="@(_model.IconName == icon ? Color.Surface : Color.Primary)" />
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseIconPicker" Color="Color.Primary">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private bool _isEditing => !string.IsNullOrEmpty(Id);
+    private bool _isLoading = true;
+    private bool _isBusy = false;
+    private bool _isValid = false;
+    private bool _isIconPickerOpen = false;
+    private string[] _errors = { };
+    private MudForm _form;
+    private CreditCardFormModel _model = new();
+    private MudColor _colorValue = new("#ff9800");
+
+    private readonly string[] _availableIcons = new[]
+    {
+        Icons.Material.Filled.CreditCard,
+        Icons.Material.Filled.Payment,
+        Icons.Material.Filled.AccountBalanceWallet,
+        Icons.Material.Filled.ShoppingCart,
+        Icons.Material.Filled.Store,
+        Icons.Material.Filled.LocalAtm,
+        Icons.Material.Filled.Payments,
+        Icons.Material.Filled.CreditScore,
+        Icons.Material.Filled.Money,
+        Icons.Material.Filled.Wallet,
+        Icons.Material.Filled.CardGiftcard,
+        Icons.Material.Filled.Euro,
+        Icons.Material.Filled.Diamond,
+        Icons.Material.Filled.LocalMall,
+        Icons.Material.Filled.AttachMoney,
+        Icons.Material.Filled.Receipt
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+
+            if (_isEditing)
+            {
+                var card = await CreditCardService.GetCreditCardByIdAsync(Id);
+                _model = new CreditCardFormModel
+                {
+                    Name = card.Name,
+                    LastFourDigits = card.LastFourDigits,
+                    Limit = card.Limit,
+                    CurrentBalance = card.CurrentBalance,
+                    ClosingDay = card.ClosingDay,
+                    DueDay = card.DueDay,
+                    Bank = card.Bank,
+                    IsActive = card.IsActive,
+                    IconName = card.IconName ?? Icons.Material.Filled.CreditCard,
+                    Color = card.Color ?? "#ff9800"
+                };
+                _colorValue = new MudColor(card.Color ?? "#ff9800");
+            }
+            else
+            {
+                // Default values for new card
+                _model.IconName = Icons.Material.Filled.CreditCard;
+                _model.Color = "#ff9800";
+                _model.IsActive = true;
+                _model.ClosingDay = 20; // Default values for closing and due day
+                _model.DueDay = 5;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading credit card: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SubmitForm()
+    {
+        try
+        {
+            _isBusy = true;
+            _model.Color = _colorValue.Value;
+
+            if (_isEditing)
+            {
+                await CreditCardService.UpdateCreditCardAsync(Id, _model);
+                Snackbar.Add("Credit card updated successfully", Severity.Success);
+            }
+            else
+            {
+                await CreditCardService.CreateCreditCardAsync(_model);
+                Snackbar.Add("Credit card created successfully", Severity.Success);
+            }
+            
+            NavigationManager.NavigateTo("/credit-cards");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving credit card: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/credit-cards");
+    }
+
+    private void OpenIconPicker()
+    {
+        _isIconPickerOpen = true;
+    }
+
+    private void CloseIconPicker()
+    {
+        _isIconPickerOpen = false;
+    }
+
+    private void SelectIcon(string icon)
+    {
+        _model.IconName = icon;
+        _isIconPickerOpen = false;
+    }
+}

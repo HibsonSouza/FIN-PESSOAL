@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Finance Manager</title>
+    <base href="/" />
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/dollar-sign.svg"/>
+</head>
+<body>
+    <div id="app">
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading Finance Manager...</div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script>
+        window.chartJsInterop = {
+            createChart: function (canvasId, config) {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                return new Chart(ctx, config);
+            },
+            updateChart: function (chartId, data, labels) {
+                const chart = Chart.getChart(chartId);
+                if (chart) {
+                    chart.data.labels = labels;
+                    chart.data.datasets.forEach((dataset, index) => {
+                        dataset.data = data[index];
+                    });
+                    chart.update();
+                }
+            },
+            destroyChart: function (chartId) {
+                const chart = Chart.getChart(chartId);
+                if (chart) {
+                    chart.destroy();
+                }
+            }
+        };
+    </script>
+</body>
+</html>

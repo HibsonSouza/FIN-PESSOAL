@@ -1,0 +1,482 @@
+@page "/transactions"
+@attribute [Authorize]
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject ICategoryService CategoryService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Transactions - Finance Manager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudText Typo="Typo.h4" Class="mb-4">Transactions</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <div class="d-flex justify-space-between align-center flex-wrap gap-4">
+                    <MudText Typo="Typo.h6">Your Transactions</MudText>
+                    <div class="d-flex flex-wrap gap-2">
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            EndIcon="@Icons.Material.Filled.Add" 
+                            OnClick="OpenAddTransactionDialog">
+                            Add Transaction
+                        </MudButton>
+                        <MudButton 
+                            Variant="Variant.Outlined" 
+                            Color="Color.Primary" 
+                            EndIcon="@Icons.Material.Filled.Upload" 
+                            OnClick="OpenImportDialog">
+                            Import
+                        </MudButton>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudExpansionPanel>
+                <TitleContent>
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.FilterList" Class="mr-2" />
+                        <MudText>Filters</MudText>
+                    </div>
+                </TitleContent>
+                <ChildContent>
+                    <MudGrid>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudDateRangePicker 
+                                @bind-DateRange="_filterModel.DateRange" 
+                                Label="Date Range" 
+                                Variant="Variant.Outlined" 
+                                AdornmentColor="Color.Primary"
+                                Class="mb-4" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect 
+                                T="TransactionType?" 
+                                @bind-Value="_filterModel.Type" 
+                                Label="Type" 
+                                Variant="Variant.Outlined"
+                                Class="mb-4"
+                                AnchorOrigin="Origin.BottomCenter">
+                                <MudSelectItem Value="@((TransactionType?)null)">All Types</MudSelectItem>
+                                @foreach (TransactionType type in Enum.GetValues(typeof(TransactionType)))
+                                {
+                                    <MudSelectItem Value="@type">@type.ToDisplayString()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect 
+                                T="string" 
+                                @bind-Value="_filterModel.AccountId" 
+                                Label="Account" 
+                                Variant="Variant.Outlined"
+                                Class="mb-4"
+                                AnchorOrigin="Origin.BottomCenter">
+                                <MudSelectItem Value="@string.Empty">All Accounts</MudSelectItem>
+                                @foreach (var account in _accounts)
+                                {
+                                    <MudSelectItem Value="@account.Id">@account.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect 
+                                T="string" 
+                                @bind-Value="_filterModel.CategoryId" 
+                                Label="Category" 
+                                Variant="Variant.Outlined"
+                                Class="mb-4"
+                                AnchorOrigin="Origin.BottomCenter">
+                                <MudSelectItem Value="@string.Empty">All Categories</MudSelectItem>
+                                @foreach (var category in _categories)
+                                {
+                                    <MudSelectItem Value="@category.Id">@category.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudNumericField 
+                                T="decimal?" 
+                                @bind-Value="_filterModel.MinAmount" 
+                                Label="Min Amount" 
+                                Variant="Variant.Outlined"
+                                Format="F2"
+                                Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                                AdornmentColor="Color.Primary"
+                                HideSpinButtons="true"
+                                Class="mb-4" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudNumericField 
+                                T="decimal?" 
+                                @bind-Value="_filterModel.MaxAmount" 
+                                Label="Max Amount" 
+                                Variant="Variant.Outlined"
+                                Format="F2"
+                                Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                                AdornmentColor="Color.Primary"
+                                HideSpinButtons="true"
+                                Class="mb-4" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudSelect 
+                                T="bool?" 
+                                @bind-Value="_filterModel.IsReconciled" 
+                                Label="Status" 
+                                Variant="Variant.Outlined"
+                                Class="mb-4"
+                                AnchorOrigin="Origin.BottomCenter">
+                                <MudSelectItem Value="@((bool?)null)">All Statuses</MudSelectItem>
+                                <MudSelectItem Value="@true">Reconciled</MudSelectItem>
+                                <MudSelectItem Value="@false">Not Reconciled</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudTextField 
+                                @bind-Value="_filterModel.SearchTerm" 
+                                Label="Search" 
+                                Variant="Variant.Outlined"
+                                Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.Search"
+                                AdornmentColor="Color.Primary"
+                                Class="mb-4" />
+                        </MudItem>
+                        <MudItem xs="12" Class="d-flex justify-end">
+                            <MudButton 
+                                Variant="Variant.Text" 
+                                Color="Color.Error" 
+                                OnClick="ResetFilters" 
+                                Class="mr-2">
+                                Reset
+                            </MudButton>
+                            <MudButton 
+                                Variant="Variant.Filled" 
+                                Color="Color.Primary" 
+                                OnClick="ApplyFilters">
+                                Apply Filters
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </ChildContent>
+            </MudExpansionPanel>
+        </MudItem>
+
+        <MudItem xs="12">
+            @if (_isLoading)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+            }
+            else if (_transactions.Count == 0)
+            {
+                <MudPaper Class="pa-12" Elevation="2">
+                    <div class="d-flex flex-column align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Primary" Size="Size.Large" Class="mb-4" />
+                        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No transactions found</MudText>
+                        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-4">Add your first transaction or adjust your filters.</MudText>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            OnClick="OpenAddTransactionDialog">
+                            Add Your First Transaction
+                        </MudButton>
+                    </div>
+                </MudPaper>
+            }
+            else
+            {
+                <MudPaper Elevation="2">
+                    <MudTable Items="_transactions" Hover="true" Breakpoint="Breakpoint.Sm" FixedHeader="true" FixedFooter="true"
+                             @bind-SelectedItem="_selectedTransaction" RowClassFunc="@SelectedRowClassFunc">
+                        <HeaderContent>
+                            <MudTh>Date</MudTh>
+                            <MudTh>Description</MudTh>
+                            <MudTh>Category</MudTh>
+                            <MudTh>Account</MudTh>
+                            <MudTh Style="text-align: right">Amount</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Date">@context.Date.ToShortDateString()</MudTd>
+                            <MudTd DataLabel="Description">@context.Description</MudTd>
+                            <MudTd DataLabel="Category">
+                                @if (!string.IsNullOrEmpty(context.CategoryName))
+                                {
+                                    <MudChip 
+                                        Size="Size.Small" 
+                                        Color="@GetCategoryColor(context.Type)"
+                                        Label="true">
+                                        @context.CategoryName
+                                    </MudChip>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Account">@context.AccountName</MudTd>
+                            <MudTd DataLabel="Amount" Style="text-align: right">
+                                <MudText Class="@GetAmountColor(context.Type)">
+                                    @(context.Type == TransactionType.EXPENSE ? "-" : "")@FormatCurrency(Math.Abs(context.Amount))
+                                </MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip 
+                                    Size="Size.Small" 
+                                    Color="@(context.IsReconciled ? Color.Success : Color.Default)"
+                                    Label="true">
+                                    @(context.IsReconciled ? "Reconciled" : "Pending")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>
+                                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Dense="true" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                                    <MudMenuItem OnClick="@(() => OpenEditTransactionDialog(context))">Edit</MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => ToggleReconciledStatus(context))">
+                                        @(context.IsReconciled ? "Mark as Pending" : "Mark as Reconciled")
+                                    </MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenDeleteTransactionDialog(context.Id, context.Description))">Delete</MudMenuItem>
+                                </MudMenu>
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                        </PagerContent>
+                    </MudTable>
+                </MudPaper>
+            }
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<TransactionViewModel> _transactions = new();
+    private List<AccountViewModel> _accounts = new();
+    private List<CategoryViewModel> _categories = new();
+    private bool _isLoading = true;
+    private TransactionViewModel _selectedTransaction = null;
+
+    private class TransactionFilterViewModel
+    {
+        public DateRange DateRange { get; set; }
+        public TransactionType? Type { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
+        public string AccountId { get; set; } = string.Empty;
+        public decimal? MinAmount { get; set; }
+        public decimal? MaxAmount { get; set; }
+        public string SearchTerm { get; set; } = string.Empty;
+        public bool? IsReconciled { get; set; }
+    }
+
+    private TransactionFilterViewModel _filterModel = new()
+    {
+        DateRange = new DateRange(DateTime.Now.AddMonths(-1), DateTime.Now),
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            
+            // Load reference data for filters
+            var accountsTask = AccountService.GetAccountsAsync();
+            var categoriesTask = CategoryService.GetCategoriesAsync();
+            
+            await Task.WhenAll(accountsTask, categoriesTask);
+            
+            _accounts = await accountsTask;
+            _categories = await categoriesTask;
+            
+            await LoadTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task LoadTransactionsAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            
+            var filter = new TransactionFilterModel
+            {
+                StartDate = _filterModel.DateRange?.Start,
+                EndDate = _filterModel.DateRange?.End,
+                Type = _filterModel.Type,
+                CategoryId = string.IsNullOrEmpty(_filterModel.CategoryId) ? null : _filterModel.CategoryId,
+                AccountId = string.IsNullOrEmpty(_filterModel.AccountId) ? null : _filterModel.AccountId,
+                MinAmount = _filterModel.MinAmount,
+                MaxAmount = _filterModel.MaxAmount,
+                SearchTerm = string.IsNullOrEmpty(_filterModel.SearchTerm) ? null : _filterModel.SearchTerm,
+                IsReconciled = _filterModel.IsReconciled
+            };
+            
+            _transactions = await TransactionService.GetTransactionsAsync(filter);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading transactions: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ApplyFilters()
+    {
+        await LoadTransactionsAsync();
+    }
+
+    private void ResetFilters()
+    {
+        _filterModel = new TransactionFilterViewModel
+        {
+            DateRange = new DateRange(DateTime.Now.AddMonths(-1), DateTime.Now)
+        };
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private string GetAmountColor(TransactionType type)
+    {
+        return type == TransactionType.EXPENSE ? "currency-negative" : "currency-positive";
+    }
+
+    private Color GetCategoryColor(TransactionType type)
+    {
+        return type switch
+        {
+            TransactionType.INCOME => Color.Success,
+            TransactionType.EXPENSE => Color.Error,
+            TransactionType.TRANSFER => Color.Info,
+            TransactionType.INVESTMENT => Color.Secondary,
+            _ => Color.Default
+        };
+    }
+
+    private string SelectedRowClassFunc(TransactionViewModel transaction, int index)
+    {
+        if (_selectedTransaction == null || transaction.Id != _selectedTransaction.Id)
+            return string.Empty;
+        
+        return "selected";
+    }
+
+    private async Task OpenAddTransactionDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddEditTransaction>("Add Transaction", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadTransactionsAsync();
+        }
+    }
+
+    private async Task OpenEditTransactionDialog(TransactionViewModel transaction)
+    {
+        var parameters = new DialogParameters
+        {
+            { "TransactionId", transaction.Id }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddEditTransaction>("Edit Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadTransactionsAsync();
+        }
+    }
+
+    private async Task OpenDeleteTransactionDialog(string transactionId, string description)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the transaction '{description}'? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Delete Transaction", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteTransactionAsync(transactionId);
+        }
+    }
+
+    private async Task DeleteTransactionAsync(string transactionId)
+    {
+        try
+        {
+            await TransactionService.DeleteTransactionAsync(transactionId);
+            Snackbar.Add("Transaction deleted successfully", Severity.Success);
+            await LoadTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting transaction: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ToggleReconciledStatus(TransactionViewModel transaction)
+    {
+        try
+        {
+            var model = new TransactionFormModel
+            {
+                Amount = transaction.Amount,
+                Description = transaction.Description,
+                Date = transaction.Date,
+                Type = transaction.Type,
+                CategoryId = transaction.CategoryId,
+                AccountId = transaction.AccountId,
+                IsReconciled = !transaction.IsReconciled,
+                Notes = transaction.Notes,
+                ReceiptUrl = transaction.ReceiptUrl,
+                Location = transaction.Location,
+                Tags = transaction.Tags,
+                CreditCardId = transaction.CreditCardId
+            };
+            
+            await TransactionService.UpdateTransactionAsync(transaction.Id, model);
+            Snackbar.Add($"Transaction marked as {(model.IsReconciled ? "reconciled" : "pending")}", Severity.Success);
+            await LoadTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating transaction: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenImportDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<Shared.ImportTransactionsDialog>("Import Transactions", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadTransactionsAsync();
+        }
+    }
+}

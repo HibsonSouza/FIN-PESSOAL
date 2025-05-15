@@ -1,0 +1,28 @@
+modules = ["dotnet", "dotnet-8.0"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Blazor Finance Manager"
+
+[[workflows.workflow]]
+name = "Blazor Finance Manager"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd ClientApp && dotnet run --urls=http://0.0.0.0:5000"
+waitForPort = 5000
+
+[deployment]
+run = ["sh", "-c", "cd ClientApp && dotnet run --urls=http://0.0.0.0:5000"]

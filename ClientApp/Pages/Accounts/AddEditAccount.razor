@@ -1,0 +1,325 @@
+@page "/accounts/add"
+@page "/accounts/edit/{Id}"
+@attribute [Authorize]
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_isEditing ? "Edit Account" : "Add Account") - Finance Manager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h5" Class="mb-4">@(_isEditing ? "Edit Account" : "New Account")</MudText>
+
+        @if (_isLoading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+        }
+        else
+        {
+            <MudForm @ref="_form" Model="@_model" @bind-IsValid="@_isValid" @bind-Errors="@_errors">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField 
+                            @bind-Value="_model.Name" 
+                            Label="Account Name" 
+                            Required="true" 
+                            RequiredError="Account name is required"
+                            Counter="50"
+                            Immediate="true"
+                            MaxLength="50"
+                            Variant="Variant.Outlined"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudSelect 
+                            @bind-Value="_model.Type" 
+                            Label="Account Type" 
+                            Required="true" 
+                            RequiredError="Account type is required"
+                            Variant="Variant.Outlined"
+                            Class="mb-4"
+                            AdornmentIcon="@GetAccountTypeIcon(_model.Type)"
+                            AdornmentColor="Color.Primary"
+                            T="AccountType"
+                            AnchorOrigin="Origin.BottomCenter"
+                            TransformOrigin="Origin.TopCenter">
+                            @foreach (AccountType type in Enum.GetValues(typeof(AccountType)))
+                            {
+                                <MudSelectItem Value="@type">
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@type.GetDefaultIcon()" Class="mr-2" />
+                                        @type.ToDisplayString()
+                                    </div>
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField 
+                            @bind-Value="_model.Balance" 
+                            Label="Initial Balance" 
+                            Required="true" 
+                            RequiredError="Balance is required"
+                            Variant="Variant.Outlined"
+                            Class="mb-4"
+                            Format="F2"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                            AdornmentColor="Color.Primary"
+                            HideSpinButtons="true" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudTextField 
+                            @bind-Value="_model.Institution" 
+                            Label="Institution" 
+                            Variant="Variant.Outlined"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField 
+                            @bind-Value="_model.AccountNumber" 
+                            Label="Account Number" 
+                            Variant="Variant.Outlined"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField 
+                            @bind-Value="_model.Agency" 
+                            Label="Agency/Branch" 
+                            Variant="Variant.Outlined"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudTextField 
+                            @bind-Value="_model.IconName" 
+                            Label="Icon" 
+                            Variant="Variant.Outlined"
+                            Adornment="Adornment.Start"
+                            AdornmentIcon="@_model.IconName"
+                            ReadOnly="true"
+                            Class="mb-4"
+                            OnClick="@OpenIconPicker" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudColorPicker 
+                            @bind-Value="_colorValue"
+                            Label="Color" 
+                            Variant="Variant.Outlined"
+                            DisableToolbar="true"
+                            DisablePreview="true"
+                            DisableModeSwitch="true"
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox 
+                            @bind-Checked="_model.IsActive"
+                            Label="Active"
+                            Color="Color.Primary" 
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudCheckBox 
+                            @bind-Checked="_model.IncludeInTotal"
+                            Label="Include in Total Balance"
+                            Color="Color.Primary" 
+                            Class="mb-4" />
+                    </MudItem>
+
+                    <MudItem xs="12" Class="d-flex justify-end">
+                        <MudButton 
+                            Variant="Variant.Text" 
+                            Color="Color.Secondary" 
+                            OnClick="GoBack" 
+                            Class="mr-2">
+                            Cancel
+                        </MudButton>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            OnClick="SubmitForm"
+                            Disabled="@(!_isValid || _isBusy)">
+                            @if (_isBusy)
+                            {
+                                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                                <MudText Class="ms-2">Processing</MudText>
+                            }
+                            else
+                            {
+                                @(_isEditing ? "Update" : "Create")
+                            }
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        }
+    </MudPaper>
+</MudContainer>
+
+<MudDialog @bind-IsVisible="_isIconPickerOpen" Options="new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true }">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Select Icon</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudGrid>
+            @foreach (var icon in _availableIcons)
+            {
+                <MudItem xs="3" sm="2">
+                    <MudPaper 
+                        Elevation="2" 
+                        Class="pa-4 d-flex justify-center cursor-pointer" 
+                        Style="@($"background-color: {(_model.IconName == icon ? _colorValue : "transparent")}")"
+                        @onclick="() => SelectIcon(icon)">
+                        <MudIcon Icon="@icon" Size="Size.Large" Color="@(_model.IconName == icon ? Color.Surface : Color.Primary)" />
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseIconPicker" Color="Color.Primary">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private bool _isEditing => !string.IsNullOrEmpty(Id);
+    private bool _isLoading = true;
+    private bool _isBusy = false;
+    private bool _isValid = false;
+    private bool _isIconPickerOpen = false;
+    private string[] _errors = { };
+    private MudForm _form;
+    private AccountFormModel _model = new();
+    private MudColor _colorValue = new("#1976d2");
+
+    private readonly string[] _availableIcons = new[]
+    {
+        Icons.Material.Filled.AccountBalance,
+        Icons.Material.Filled.AccountBalanceWallet,
+        Icons.Material.Filled.Savings,
+        Icons.Material.Filled.CreditCard,
+        Icons.Material.Filled.MonetizationOn,
+        Icons.Material.Filled.BusinessCenter,
+        Icons.Material.Filled.Home,
+        Icons.Material.Filled.AttachMoney,
+        Icons.Material.Filled.Payments,
+        Icons.Material.Filled.LocalAtm,
+        Icons.Material.Filled.Wallet,
+        Icons.Material.Filled.Token,
+        Icons.Material.Filled.TrendingUp,
+        Icons.Material.Filled.Storefront,
+        Icons.Material.Filled.PriceCheck,
+        Icons.Material.Filled.Paid
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _isLoading = true;
+
+            if (_isEditing)
+            {
+                var account = await AccountService.GetAccountByIdAsync(Id);
+                _model = new AccountFormModel
+                {
+                    Name = account.Name,
+                    Type = account.Type,
+                    Balance = account.Balance,
+                    Institution = account.Institution,
+                    AccountNumber = account.AccountNumber,
+                    Agency = account.Agency,
+                    IsActive = account.IsActive,
+                    IconName = account.IconName,
+                    Color = account.Color,
+                    IncludeInTotal = account.IncludeInTotal
+                };
+                _colorValue = new MudColor(account.Color);
+            }
+            else
+            {
+                // Default values for new account
+                _model.IconName = Icons.Material.Filled.AccountBalance;
+                _model.Color = "#1976d2";
+                _model.IsActive = true;
+                _model.IncludeInTotal = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading account: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SubmitForm()
+    {
+        try
+        {
+            _isBusy = true;
+            _model.Color = _colorValue.Value;
+
+            if (_isEditing)
+            {
+                await AccountService.UpdateAccountAsync(Id, _model);
+                Snackbar.Add("Account updated successfully", Severity.Success);
+            }
+            else
+            {
+                await AccountService.CreateAccountAsync(_model);
+                Snackbar.Add("Account created successfully", Severity.Success);
+            }
+            
+            NavigationManager.NavigateTo("/accounts");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving account: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/accounts");
+    }
+
+    private string GetAccountTypeIcon(AccountType type)
+    {
+        return type.GetDefaultIcon();
+    }
+
+    private void OpenIconPicker()
+    {
+        _isIconPickerOpen = true;
+    }
+
+    private void CloseIconPicker()
+    {
+        _isIconPickerOpen = false;
+    }
+
+    private void SelectIcon(string icon)
+    {
+        _model.IconName = icon;
+        _isIconPickerOpen = false;
+    }
+}

@@ -1,0 +1,502 @@
+@page "/budgets"
+@attribute [Authorize]
+@inject IBudgetService BudgetService
+@inject ICategoryService CategoryService
+@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Budgets - Finance Manager</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudText Typo="Typo.h4" Class="mb-4">Budget Overview</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.h6">Your Budgets</MudText>
+                    <MudButton 
+                        Variant="Variant.Filled" 
+                        Color="Color.Primary" 
+                        EndIcon="@Icons.Material.Filled.Add" 
+                        OnClick="OpenAddBudgetDialog">
+                        Add Budget
+                    </MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        @if (_isLoading)
+        {
+            <MudItem xs="12">
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+            </MudItem>
+        }
+        else if (_budgets.Count == 0)
+        {
+            <MudItem xs="12">
+                <MudPaper Class="pa-12" Elevation="2">
+                    <div class="d-flex flex-column align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.PieChart" Color="Color.Primary" Size="Size.Large" Class="mb-4" />
+                        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">No budgets found</MudText>
+                        <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-4">Start by creating a budget to track your spending.</MudText>
+                        <MudButton 
+                            Variant="Variant.Filled" 
+                            Color="Color.Primary" 
+                            OnClick="OpenAddBudgetDialog">
+                            Create Your First Budget
+                        </MudButton>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        }
+        else
+        {
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Budget Summary</MudText>
+                    <div class="chart-container">
+                        <canvas id="budgetSummaryChart"></canvas>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Monthly Expenses vs Budget</MudText>
+                    <div class="chart-container">
+                        <canvas id="budgetVsSpendingChart"></canvas>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Budget Progress</MudText>
+                    <MudGrid>
+                        @foreach (var budget in _budgets)
+                        {
+                            <MudItem xs="12" md="6" lg="4">
+                                <MudCard Elevation="1" @onclick="() => NavigateToDetailsPage(budget.CategoryId)">
+                                    <MudCardContent>
+                                        <div class="d-flex align-center mb-2">
+                                            <MudAvatar Color="Color.Primary" Style="@($"background-color: {budget.CategoryColor}")" Size="Size.Small" Class="mr-2">
+                                                <MudIcon Icon="@budget.CategoryIconName" />
+                                            </MudAvatar>
+                                            <MudText Typo="Typo.h6">@budget.CategoryName</MudText>
+                                            <MudSpacer />
+                                            <MudIconButton 
+                                                Icon="@Icons.Material.Filled.Edit" 
+                                                Size="Size.Small" 
+                                                OnClick="@((e) => { e.StopPropagation(); OpenEditBudgetDialog(budget); })" />
+                                            <MudIconButton 
+                                                Icon="@Icons.Material.Filled.Delete" 
+                                                Size="Size.Small" 
+                                                OnClick="@((e) => { e.StopPropagation(); OpenDeleteBudgetDialog(budget.Id, budget.CategoryName); })" />
+                                        </div>
+                                        <MudProgressLinear 
+                                            Value="@((double)budget.PercentUsed)" 
+                                            Color="@GetBudgetColor(budget)" 
+                                            Class="my-2" />
+                                        <div class="d-flex justify-space-between">
+                                            <MudText Typo="Typo.body2">@FormatCurrency(budget.CurrentSpent) of @FormatCurrency(budget.Amount)</MudText>
+                                            <MudText Typo="Typo.body2" Color="@GetTextColor(budget)">@budget.PercentUsed%</MudText>
+                                        </div>
+                                        <MudText Typo="Typo.caption" Class="mt-2">
+                                            @budget.Period.ToDisplayString() budget
+                                            @if (budget.RemainingAmount >= 0)
+                                            {
+                                                <span>- @FormatCurrency(budget.RemainingAmount) remaining</span>
+                                            }
+                                            else
+                                            {
+                                                <span Class="currency-negative">- @FormatCurrency(Math.Abs(budget.RemainingAmount)) over budget</span>
+                                            }
+                                        </MudText>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<BudgetViewModel> _budgets = new();
+    private List<CategoryViewModel> _categories = new();
+    private bool _isLoading = true;
+    private string _budgetSummaryChartId = "budgetSummaryChart";
+    private string _budgetVsSpendingChartId = "budgetVsSpendingChart";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_isLoading && _budgets.Count > 0)
+        {
+            await RenderChartsAsync();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            
+            var budgetsTask = BudgetService.GetBudgetsAsync();
+            var categoriesTask = CategoryService.GetCategoriesAsync();
+            
+            await Task.WhenAll(budgetsTask, categoriesTask);
+            
+            _budgets = await budgetsTask;
+            _categories = await categoriesTask;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading budgets: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task RenderChartsAsync()
+    {
+        await RenderBudgetSummaryChartAsync();
+        await RenderBudgetVsSpendingChartAsync();
+    }
+
+    private async Task RenderBudgetSummaryChartAsync()
+    {
+        var labels = _budgets.Select(b => b.CategoryName).ToArray();
+        var amounts = _budgets.Select(b => (double)b.Amount).ToArray();
+        var spent = _budgets.Select(b => (double)b.CurrentSpent).ToArray();
+        var colors = _budgets.Select(b => b.CategoryColor).ToArray();
+
+        var config = new
+        {
+            type = "doughnut",
+            data = new
+            {
+                labels = labels,
+                datasets = new object[]
+                {
+                    new
+                    {
+                        label = "Budget Allocation",
+                        data = amounts,
+                        backgroundColor = colors,
+                        borderColor = "white",
+                        borderWidth = 1
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                plugins = new
+                {
+                    legend = new
+                    {
+                        position = "right",
+                        labels = new
+                        {
+                            boxWidth = 15,
+                            padding = 15
+                        }
+                    },
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) + ' (' + ((context.raw / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1) + '%)'; }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _budgetSummaryChartId, config);
+    }
+
+    private async Task RenderBudgetVsSpendingChartAsync()
+    {
+        var labels = _budgets.Select(b => b.CategoryName).ToArray();
+        var budgetAmounts = _budgets.Select(b => (double)b.Amount).ToArray();
+        var spentAmounts = _budgets.Select(b => (double)b.CurrentSpent).ToArray();
+
+        var config = new
+        {
+            type = "bar",
+            data = new
+            {
+                labels = labels,
+                datasets = new object[]
+                {
+                    new
+                    {
+                        label = "Budget",
+                        data = budgetAmounts,
+                        backgroundColor = "rgba(33, 150, 243, 0.7)",
+                        borderColor = "rgba(33, 150, 243, 1)",
+                        borderWidth = 1
+                    },
+                    new
+                    {
+                        label = "Spent",
+                        data = spentAmounts,
+                        backgroundColor = "rgba(244, 67, 54, 0.7)",
+                        borderColor = "rgba(244, 67, 54, 1)",
+                        borderWidth = 1
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                maintainAspectRatio = false,
+                scales = new
+                {
+                    y = new
+                    {
+                        beginAtZero = true,
+                        ticks = new
+                        {
+                            callback = "function(value) { return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
+                        }
+                    }
+                },
+                plugins = new
+                {
+                    tooltip = new
+                    {
+                        callbacks = new
+                        {
+                            label = "function(context) { return context.dataset.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _budgetVsSpendingChartId, config);
+    }
+
+    private string FormatCurrency(decimal amount)
+    {
+        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
+    }
+
+    private Color GetBudgetColor(BudgetViewModel budget)
+    {
+        if (budget.PercentUsed < 75)
+            return Color.Success;
+        if (budget.PercentUsed < 100)
+            return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetTextColor(BudgetViewModel budget)
+    {
+        if (budget.PercentUsed < 75)
+            return Color.Success;
+        if (budget.PercentUsed < 100)
+            return Color.Warning;
+        return Color.Error;
+    }
+
+    private async Task OpenAddBudgetDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Categories", _categories.Where(c => c.Type == TransactionType.EXPENSE).ToList() }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddEditBudgetDialog>("Add Budget", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadDataAsync();
+            await RenderChartsAsync();
+        }
+    }
+
+    private async Task OpenEditBudgetDialog(BudgetViewModel budget)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Budget", budget },
+            { "Categories", _categories.Where(c => c.Type == TransactionType.EXPENSE).ToList() }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddEditBudgetDialog>("Edit Budget", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadDataAsync();
+            await RenderChartsAsync();
+        }
+    }
+
+    private async Task OpenDeleteBudgetDialog(string budgetId, string categoryName)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the budget for '{categoryName}'? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Delete Budget", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteBudgetAsync(budgetId);
+        }
+    }
+
+    private async Task DeleteBudgetAsync(string budgetId)
+    {
+        try
+        {
+            await BudgetService.DeleteBudgetAsync(budgetId);
+            Snackbar.Add("Budget deleted successfully", Severity.Success);
+            await LoadDataAsync();
+            await RenderChartsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting budget: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void NavigateToDetailsPage(string categoryId)
+    {
+        NavigationManager.NavigateTo($"/budgets/categories/{categoryId}");
+    }
+
+    public class AddEditBudgetDialog : ComponentBase
+    {
+        [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+        [Parameter] public BudgetViewModel Budget { get; set; }
+        [Parameter] public List<CategoryViewModel> Categories { get; set; } = new();
+
+        private bool _isEdit => Budget != null;
+        private BudgetFormModel _model = new();
+        private bool _isValid;
+        private bool _isBusy;
+        private string[] _errors = { };
+        private MudForm _form;
+
+        [Inject] private IBudgetService BudgetService { get; set; }
+        [Inject] private ISnackbar Snackbar { get; set; }
+
+        protected override void OnInitialized()
+        {
+            if (_isEdit)
+            {
+                _model = new BudgetFormModel
+                {
+                    CategoryId = Budget.CategoryId,
+                    Amount = Budget.Amount,
+                    Period = Budget.Period,
+                    StartDate = Budget.StartDate,
+                    EndDate = Budget.EndDate
+                };
+            }
+            else
+            {
+                _model.StartDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                _model.Period = BudgetPeriod.MONTHLY;
+            }
+        }
+
+        private async Task SubmitAsync()
+        {
+            if (!_isValid)
+            {
+                Snackbar.Add("Please fill in all required fields", Severity.Warning);
+                return;
+            }
+
+            try
+            {
+                _isBusy = true;
+
+                if (_isEdit)
+                {
+                    await BudgetService.UpdateBudgetAsync(Budget.Id, _model);
+                    Snackbar.Add("Budget updated successfully", Severity.Success);
+                }
+                else
+                {
+                    await BudgetService.CreateBudgetAsync(_model);
+                    Snackbar.Add("Budget created successfully", Severity.Success);
+                }
+                
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error saving budget: {ex.Message}", Severity.Error);
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
+        private void Cancel() => MudDialog.Cancel();
+
+        private void UpdatePeriod(BudgetPeriod period)
+        {
+            _model.Period = period;
+        }
+
+        private string GetCategoryColor(string categoryId)
+        {
+            return Categories.FirstOrDefault(c => c.Id == categoryId)?.Color ?? "#9e9e9e";
+        }
+
+        private string GetCategoryIcon(string categoryId)
+        {
+            return Categories.FirstOrDefault(c => c.Id == categoryId)?.IconName ?? Icons.Material.Filled.Category;
+        }
+
+        private void CalculateEndDate()
+        {
+            if (_model.StartDate.HasValue)
+            {
+                _model.EndDate = _model.Period.GetEndDate(_model.StartDate.Value);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (!_isLoading && _budgets.Count > 0)
+        {
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _budgetSummaryChartId);
+            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _budgetVsSpendingChartId);
+        }
+    }
+}

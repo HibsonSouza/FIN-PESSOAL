@@ -1,0 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+html, body {
+    font-family: 'Roboto', Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+#app {
+    height: 100%;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+}
+
+.loading-spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #3f51b5;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+.loading-text {
+    font-size: 1.2rem;
+    color: #3f51b5;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#blazor-error-ui {
+    background-color: #ffcc00;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+.page-container {
+    padding: 16px;
+}
+
+.dashboard-card {
+    height: 100%;
+    transition: transform 0.2s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    font-size: 2rem;
+}
+
+.summary-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.chart-container {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+}
+
+.list-item-highlight:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.avatar-small {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+}
+
+.currency-positive {
+    color: #2e7d32;
+}
+
+.currency-negative {
+    color: #d32f2f;
+}
+
+.auth-card {
+    max-width: 450px;
+    margin: 40px auto;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.mud-table-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.transaction-list-item {
+    border-left: 4px solid transparent;
+}
+
+.transaction-list-item.income {
+    border-left-color: #2e7d32;
+}
+
+.transaction-list-item.expense {
+    border-left-color: #d32f2f;
+}
+
+.transaction-list-item.transfer {
+    border-left-color: #1976d2;
+}
+
+@media (max-width: 600px) {
+    .mud-container {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+    
+    .mud-card-content {
+        padding: 12px;
+    }
+}

@@ -1,0 +1,8 @@
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.csproj.AssemblyReference.cache
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.GeneratedMSBuildEditorConfig.editorconfig
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.AssemblyInfoInputs.cache
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.AssemblyInfo.cs
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.csproj.CoreCompileInputs.cache
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.MvcApplicationPartsAssemblyInfo.cache
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.RazorAssemblyInfo.cache
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.RazorAssemblyInfo.cs
