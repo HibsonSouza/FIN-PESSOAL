@@ -85,26 +85,5 @@ namespace FinanceManager.ClientApp.Models
         public string? Notes { get; set; }
     }
     
-    public class BudgetProgressViewModel
-    {
-        public string Id { get; set; } = string.Empty;
-        
-        public string Name { get; set; } = string.Empty;
-        
-        public decimal Amount { get; set; }
-        
-        public decimal SpentAmount { get; set; }
-        
-        public decimal RemainingAmount { get; set; }
-        
-        public double PercentUsed { get; set; }
-        
-        public string? CategoryName { get; set; }
-        
-        public string? Color { get; set; }
-        
-        public DateTime StartDate { get; set; }
-        
-        public DateTime EndDate { get; set; }
-    }
+    // BudgetProgressViewModel está definido em seu próprio arquivo
 }

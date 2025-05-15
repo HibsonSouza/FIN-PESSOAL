@@ -1,7 +1,7 @@
 using Blazored.LocalStorage;
-using FinanceManager.ClientApp.Components.Authentication;
 using FinanceManager.ClientApp.Models;
 using FinanceManager.ClientApp.Services.Interfaces;
+using FinanceManager.ClientApp.Store;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;

@@ -42,14 +42,6 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvTmF2TWVudS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Components/NavMenu.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9OYXZNZW51LnJhem9y
-build_metadata.AdditionalFiles.CssScope = 
-
-[/home/runner/workspace/ClientApp/Components/RedirectToLogin.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9SZWRpcmVjdFRvTG9naW4ucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
 [/home/runner/workspace/ClientApp/Pages/Accounts/AccountDetails.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudHMvQWNjb3VudERldGFpbHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
@@ -60,10 +52,6 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/home/runner/workspace/ClientApp/Pages/Accounts/AddEditAccount.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudHMvQWRkRWRpdEFjY291bnQucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
-[/home/runner/workspace/ClientApp/Pages/Auth/Login.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXV0aC9Mb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/runner/workspace/ClientApp/Pages/Authentication/ForgotPassword.razor]
@@ -98,12 +86,12 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ3JlZGl0Q2FyZHMvQ2FyZHNMaXN0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Dashboard.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRGFzaGJvYXJkLnJhem9y
-build_metadata.AdditionalFiles.CssScope = 
-
 [/home/runner/workspace/ClientApp/Pages/Dashboard/Index.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRGFzaGJvYXJkL0luZGV4LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/runner/workspace/ClientApp/Pages/DashboardPage.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRGFzaGJvYXJkUGFnZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/runner/workspace/ClientApp/Pages/Index.razor]
@@ -132,18 +120,6 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/home/runner/workspace/ClientApp/Shared/LoginDisplay.razor]
 build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0xvZ2luRGlzcGxheS5yYXpvcg==
-build_metadata.AdditionalFiles.CssScope = 
-
-[/home/runner/workspace/ClientApp/Shared/MainLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL01haW5MYXlvdXQucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
-[/home/runner/workspace/ClientApp/Shared/NavMenu.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL05hdk1lbnUucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
-[/home/runner/workspace/ClientApp/Shared/RedirectToLogin.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL1JlZGlyZWN0VG9Mb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/runner/workspace/ClientApp/_Imports.razor]

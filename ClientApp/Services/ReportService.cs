@@ -187,7 +187,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<ExpenseTrendReportResult> GetExpensesTrend(DateTimeRange dateRange, string categoryId = null)
+        public async Task<ExpenseTrendReportResult> GetExpensesTrend(DateTimeRange dateRange, string? categoryId = null)
         {
             try
             {
@@ -213,7 +213,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<IncomeTrendReportResult> GetIncomeTrend(DateTimeRange dateRange, string categoryId = null)
+        public async Task<IncomeTrendReportResult> GetIncomeTrend(DateTimeRange dateRange, string? categoryId = null)
         {
             try
             {

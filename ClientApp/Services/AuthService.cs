@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Blazored.LocalStorage;
 using FinanceManager.ClientApp.Models;
 using FinanceManager.ClientApp.Store;
-using Fluxor;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace FinanceManager.ClientApp.Services
@@ -22,18 +21,15 @@ namespace FinanceManager.ClientApp.Services
         private readonly IHttpService _httpService;
         private readonly ILocalStorageService _localStorage;
         private readonly AuthenticationStateProvider _authStateProvider;
-        private readonly IDispatcher _dispatcher;
 
         public AuthService(
             IHttpService httpService,
             ILocalStorageService localStorage,
-            AuthenticationStateProvider authStateProvider,
-            IDispatcher dispatcher)
+            AuthenticationStateProvider authStateProvider)
         {
             _httpService = httpService;
             _localStorage = localStorage;
             _authStateProvider = authStateProvider;
-            _dispatcher = dispatcher;
         }
 
         public async Task<AuthResult> LoginAsync(LoginModel model)
@@ -48,12 +44,6 @@ namespace FinanceManager.ClientApp.Services
                     await _localStorage.SetItemAsync("userName", response.Name);
                     
                     (_authStateProvider as CustomAuthStateProvider)?.NotifyAuthenticationStateChanged();
-                    
-                    _dispatcher.Dispatch(new AuthActions.SetAuthenticated(
-                        isAuthenticated: true,
-                        userName: response.Name,
-                        email: response.Email
-                    ));
                     
                     return AuthResult.Success();
                 }
@@ -94,12 +84,6 @@ namespace FinanceManager.ClientApp.Services
                 
                 (_authStateProvider as CustomAuthStateProvider)?.NotifyAuthenticationStateChanged();
                 
-                _dispatcher.Dispatch(new AuthActions.SetAuthenticated(
-                    isAuthenticated: false,
-                    userName: null,
-                    email: null
-                ));
-                
                 return AuthResult.Success();
             }
             catch (Exception ex)
@@ -132,9 +116,9 @@ namespace FinanceManager.ClientApp.Services
     public class AuthResult
     {
         public bool Succeeded { get; private set; }
-        public string ErrorMessage { get; private set; }
+        public string? ErrorMessage { get; private set; }
 
-        private AuthResult(bool succeeded, string errorMessage = null)
+        private AuthResult(bool succeeded, string? errorMessage = null)
         {
             Succeeded = succeeded;
             ErrorMessage = errorMessage;

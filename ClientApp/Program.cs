@@ -38,7 +38,8 @@ builder.Services.AddOptions();
 builder.Services.AddAuthorizationCore();
 
 // Registrar serviços de autenticação
-builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+builder.Services.AddScoped<Store.CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<Store.CustomAuthStateProvider>());
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 // Registrar outros serviços

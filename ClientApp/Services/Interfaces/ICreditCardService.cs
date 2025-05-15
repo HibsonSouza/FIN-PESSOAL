@@ -6,6 +6,7 @@ namespace FinanceManager.ClientApp.Services.Interfaces
     {
         Task<List<CreditCardViewModel>> GetCreditCards();
         Task<CreditCardViewModel> GetCreditCardById(string id);
+        Task<CreditCardViewModel> GetCreditCardByIdAsync(string id);
         Task<bool> CreateCreditCard(CreditCardCreateModel creditCard);
         Task<bool> UpdateCreditCard(string id, CreditCardUpdateModel creditCard);
         Task<bool> DeleteCreditCard(string id);

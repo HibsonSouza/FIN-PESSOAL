@@ -12,8 +12,8 @@ namespace FinanceManager.ClientApp.Services.Interfaces
         Task<ChartData> GetIncomeByCategoryChart(DateTimeRange dateRange);
         Task<NetWorthReportModel> GetNetWorthReport(DateTimeRange dateRange);
         Task<AccountBalanceReportModel> GetAccountBalanceReport(string accountId, DateTimeRange dateRange);
-        Task<ExpenseTrendReportResult> GetExpensesTrend(DateTimeRange dateRange, string categoryId = null);
-        Task<IncomeTrendReportResult> GetIncomeTrend(DateTimeRange dateRange, string categoryId = null);
+        Task<ExpenseTrendReportResult> GetExpensesTrend(DateTimeRange dateRange, string? categoryId = null);
+        Task<IncomeTrendReportResult> GetIncomeTrend(DateTimeRange dateRange, string? categoryId = null);
         Task<SavingsRateReportResult> GetSavingsRateReport(DateTimeRange dateRange);
         Task<DashboardSummary> GetDashboardSummary();
     }
