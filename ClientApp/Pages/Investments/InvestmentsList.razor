@@ -414,19 +414,19 @@
 
     public class AddEditInvestmentDialog : ComponentBase
     {
-        [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+        [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
 
-        [Parameter] public InvestmentViewModel Investment { get; set; }
+        [Parameter] public InvestmentViewModel Investment { get; set; } = null!;
 
         private bool _isEdit => Investment != null;
         private InvestmentFormModel _model = new();
         private bool _isValid;
         private bool _isBusy;
         private string[] _errors = { };
-        private MudForm _form;
+        private MudForm _form = null!;
 
-        [Inject] private IInvestmentService InvestmentService { get; set; }
-        [Inject] private ISnackbar Snackbar { get; set; }
+        [Inject] private IInvestmentService InvestmentService { get; set; } = null!;
+        [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
         protected override void OnInitialized()
         {

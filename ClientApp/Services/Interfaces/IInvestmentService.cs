@@ -14,6 +14,8 @@ namespace FinanceManager.ClientApp.Services.Interfaces
         Task<bool> DeleteInvestmentAsync(int id);
         Task<List<InvestmentTransactionViewModel>> GetInvestmentTransactionsAsync(int investmentId);
         Task<InvestmentTransactionViewModel> AddInvestmentTransactionAsync(int investmentId, InvestmentTransactionViewModel transaction);
+        Task<InvestmentTransactionViewModel> UpdateInvestmentTransactionAsync(string transactionId, InvestmentTransactionFormModel model);
+        Task<InvestmentTransactionViewModel> AddInvestmentTransactionAsync(InvestmentTransactionFormModel model);
         Task<Dictionary<DateTime, decimal>> GetInvestmentPerformanceAsync(int investmentId, DateTime startDate, DateTime endDate);
         Task<decimal> GetTotalInvestmentsValueAsync();
     }

@@ -7,6 +7,7 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
 @implements IDisposable
+@using MudBlazor
 
 <PageTitle>Card Details - Finance Manager</PageTitle>
 
@@ -244,7 +245,8 @@ else
                         <div class="d-flex justify-space-between align-center mb-4">
                             <MudText Typo="Typo.h6">Recent Transactions</MudText>
                             <MudDateRangePicker 
-                                @bind-DateRange="_dateRange" 
+                                DateRange="new DateRange(){ Start = _dateRange.Start, End = _dateRange.End }"
+                                DateRangeChanged="(range) => { _dateRange = new DateTimeRange(range.Start!.Value, range.End!.Value); LoadTransactions(); }"
                                 Label="Date Range" 
                                 Variant="Variant.Outlined" 
                                 AdornmentColor="Color.Primary"
@@ -339,9 +341,9 @@ else
 
 @code {
     [Parameter]
-    public string Id { get; set; }
+    public string Id { get; set; } = string.Empty;
 
-    private CreditCardViewModel _card;
+    private CreditCardViewModel _card = new();
     private List<TransactionViewModel> _transactions = new();
     private bool _isLoading = true;
     private bool _isTransactionsLoading = false;
@@ -381,6 +383,11 @@ else
         }
     }
 
+    private async Task LoadTransactions()
+    {
+        await LoadTransactionsAsync();
+    }
+    
     private async Task LoadTransactionsAsync()
     {
         try
@@ -391,7 +398,7 @@ else
             {
                 StartDate = _dateRange.Start,
                 EndDate = _dateRange.End,
-                Type = TransactionType.EXPENSE,
+                Type = TransactionType.Expense,
                 CreditCardId = Id
             };
             
@@ -550,7 +557,7 @@ else
         };
 
         var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
-        var dialog = await DialogService.ShowAsync<Shared.ConfirmDialog>("Mark Bill as Paid", parameters, options);
+        var dialog = await DialogService.ShowAsync<FinanceManager.ClientApp.Shared.ConfirmDialog>("Mark Bill as Paid", parameters, options);
         var result = await dialog.Result;
 
         if (!result.Canceled)
@@ -563,7 +570,7 @@ else
     {
         try
         {
-            await CreditCardService.MarkBillAsPaidAsync(billId);
+            await CreditCardService.MarkBillAsPaidAsync(billId, true);
             Snackbar.Add("Bill marked as paid successfully", Severity.Success);
             
             _card = await CreditCardService.GetCreditCardByIdAsync(Id);

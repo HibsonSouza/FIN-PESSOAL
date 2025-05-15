@@ -139,5 +139,95 @@ namespace FinanceManager.ClientApp.Services
                 return false;
             }
         }
+        
+        public async Task<bool> DeleteTransactionAsync(string id)
+        {
+            // Este método é equivalente ao DeleteTransaction, mas mantido para compatibilidade com o componente
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"{_apiEndpoint}/{id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        public async Task<List<TransactionViewModel>> GetTransactionsAsync(TransactionFilterModel filter)
+        {
+            try
+            {
+                var queryParams = new List<string>();
+                
+                if (filter.Type.HasValue)
+                {
+                    queryParams.Add($"type={filter.Type.Value}");
+                }
+                
+                if (!string.IsNullOrEmpty(filter.CategoryId))
+                {
+                    queryParams.Add($"categoryId={filter.CategoryId}");
+                }
+                
+                if (!string.IsNullOrEmpty(filter.AccountId))
+                {
+                    queryParams.Add($"accountId={filter.AccountId}");
+                }
+                
+                if (!string.IsNullOrEmpty(filter.CreditCardId))
+                {
+                    queryParams.Add($"creditCardId={filter.CreditCardId}");
+                }
+                
+                if (filter.StartDate.HasValue)
+                {
+                    queryParams.Add($"startDate={filter.StartDate.Value:yyyy-MM-dd}");
+                }
+                
+                if (filter.EndDate.HasValue)
+                {
+                    queryParams.Add($"endDate={filter.EndDate.Value:yyyy-MM-dd}");
+                }
+                
+                if (filter.MinAmount.HasValue)
+                {
+                    queryParams.Add($"minAmount={filter.MinAmount.Value}");
+                }
+                
+                if (filter.MaxAmount.HasValue)
+                {
+                    queryParams.Add($"maxAmount={filter.MaxAmount.Value}");
+                }
+                
+                if (!string.IsNullOrEmpty(filter.SearchTerm))
+                {
+                    queryParams.Add($"search={Uri.EscapeDataString(filter.SearchTerm)}");
+                }
+                
+                if (filter.IsRecurring.HasValue)
+                {
+                    queryParams.Add($"isRecurring={filter.IsRecurring.Value}");
+                }
+                
+                queryParams.Add($"includePending={filter.IncludePending}");
+                
+                var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+                
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/filter{queryString}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<List<TransactionViewModel>>(_jsonOptions) 
+                        ?? new List<TransactionViewModel>();
+                }
+                
+                return new List<TransactionViewModel>();
+            }
+            catch
+            {
+                return new List<TransactionViewModel>();
+            }
+        }
     }
 }

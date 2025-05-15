@@ -395,9 +395,9 @@
 
     public class AddEditBudgetDialog : ComponentBase
     {
-        [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+        [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
 
-        [Parameter] public BudgetViewModel Budget { get; set; }
+        [Parameter] public BudgetViewModel Budget { get; set; } = null!;
         [Parameter] public List<CategoryViewModel> Categories { get; set; } = new();
 
         private bool _isEdit => Budget != null;
@@ -405,10 +405,10 @@
         private bool _isValid;
         private bool _isBusy;
         private string[] _errors = { };
-        private MudForm _form;
+        private MudForm _form = null!;
 
-        [Inject] private IBudgetService BudgetService { get; set; }
-        [Inject] private ISnackbar Snackbar { get; set; }
+        [Inject] private IBudgetService BudgetService { get; set; } = null!;
+        [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
         protected override void OnInitialized()
         {

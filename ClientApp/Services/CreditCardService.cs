@@ -58,6 +58,27 @@ namespace FinanceManager.ClientApp.Services
                 return new CreditCardViewModel();
             }
         }
+        
+        public async Task<CreditCardViewModel> GetCreditCardByIdAsync(string id)
+        {
+            // Este método é usado no CardDetails.razor
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/{id}?includeBills=true");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<CreditCardViewModel>(_jsonOptions) 
+                        ?? new CreditCardViewModel();
+                }
+                
+                return new CreditCardViewModel();
+            }
+            catch
+            {
+                return new CreditCardViewModel();
+            }
+        }
 
         public async Task<bool> CreateCreditCard(CreditCardCreateModel creditCard)
         {
@@ -124,6 +145,20 @@ namespace FinanceManager.ClientApp.Services
             try
             {
                 var response = await _httpClient.PostAsJsonAsync($"{_apiEndpoint}/{creditCardId}/transactions", transaction);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        public async Task<bool> MarkBillAsPaidAsync(string billId, bool isPaid)
+        {
+            try
+            {
+                var data = new { IsPaid = isPaid };
+                var response = await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/bills/{billId}/payment-status", data);
                 return response.IsSuccessStatusCode;
             }
             catch

@@ -118,6 +118,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXMvVHJhbnNhY3Rpb25zL1RyYW5zYWN0aW9uc0xpc3QucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/runner/workspace/ClientApp/Shared/ConfirmDialog.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbmZpcm1EaWFsb2cucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/runner/workspace/ClientApp/Shared/LoginDisplay.razor]
 build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0xvZ2luRGlzcGxheS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 

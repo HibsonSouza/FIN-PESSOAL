@@ -1,0 +1,26 @@
+@inject MudBlazor.ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText>@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" 
+                  Color="Color.Default" 
+                  OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" 
+                  Color="Color.Primary" 
+                  OnClick="Submit">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    
+    [Parameter] public string ContentText { get; set; } = "Tem certeza que deseja continuar?";
+    [Parameter] public string ButtonText { get; set; } = "Confirmar";
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

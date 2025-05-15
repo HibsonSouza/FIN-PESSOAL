@@ -42,6 +42,9 @@ builder.Services.AddScoped<Store.CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<Store.CustomAuthStateProvider>());
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
+// Registrar serviço HTTP base
+builder.Services.AddScoped<IHttpService, HttpService>();
+
 // Registrar outros serviços
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -50,7 +53,7 @@ builder.Services.AddScoped<ICreditCardService, CreditCardService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<IReportService, ReportService>();
-builder.Services.AddScoped<ILocalStorageService>(provider => provider.GetRequiredService<ILocalStorageService>());
+// ILocalStorageService já foi registrado via AddBlazoredLocalStorage()
 
 // Registrar HttpClientFactory
 builder.Services.AddHttpClient("API", client =>

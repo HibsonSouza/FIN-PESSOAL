@@ -85,6 +85,9 @@ namespace FinanceManager.ClientApp.Models
     
     public class InvestmentTransactionFormModel
     {
+        [Required(ErrorMessage = "O investimento é obrigatório")]
+        public string InvestmentId { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Selecione um tipo")]
         public InvestmentTransactionType Type { get; set; }
         
@@ -94,15 +97,31 @@ namespace FinanceManager.ClientApp.Models
         
         [Required(ErrorMessage = "Digite a quantidade de ações/cotas")]
         [Range(0.0001, double.MaxValue, ErrorMessage = "A quantidade deve ser maior que zero")]
-        public decimal Shares { get; set; }
+        public decimal Quantity { get; set; }
         
         [Required(ErrorMessage = "Digite o preço por ação/cota")]
         [Range(0.0001, double.MaxValue, ErrorMessage = "O preço deve ser maior que zero")]
-        public decimal PricePerShare { get; set; }
+        public decimal Price { get; set; }
+        
+        // Propriedade para compatibilidade com código existente
+        public decimal Shares 
+        { 
+            get => Quantity; 
+            set => Quantity = value; 
+        }
+        
+        // Propriedade para compatibilidade com código existente
+        public decimal PricePerShare 
+        { 
+            get => Price; 
+            set => Price = value; 
+        }
+        
+        public decimal Taxes { get; set; }
         
         [Required(ErrorMessage = "Selecione uma data")]
         public DateTime Date { get; set; } = DateTime.Today;
         
-        public string Notes { get; set; }
+        public string Notes { get; set; } = string.Empty;
     }
 }

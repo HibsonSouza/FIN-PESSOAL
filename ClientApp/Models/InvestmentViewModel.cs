@@ -96,6 +96,32 @@ namespace FinanceManager.ClientApp.Models
         Income,
         Fee,
         Buy,
-        Sell
+        Sell,
+        Dividend,
+        Interest,
+        Split,
+        Merger,
+        Other
+    }
+    
+    public static class InvestmentTransactionTypeExtensions
+    {
+        public static string GetIcon(this InvestmentTransactionType type)
+        {
+            return type switch
+            {
+                InvestmentTransactionType.Buy => "fas fa-shopping-cart",
+                InvestmentTransactionType.Sell => "fas fa-money-bill-wave",
+                InvestmentTransactionType.Dividend => "fas fa-hand-holding-usd",
+                InvestmentTransactionType.Interest => "fas fa-percentage",
+                InvestmentTransactionType.Fee => "fas fa-file-invoice-dollar",
+                InvestmentTransactionType.Deposit => "fas fa-arrow-circle-down",
+                InvestmentTransactionType.Withdrawal => "fas fa-arrow-circle-up",
+                InvestmentTransactionType.Income => "fas fa-coins",
+                InvestmentTransactionType.Split => "fas fa-project-diagram",
+                InvestmentTransactionType.Merger => "fas fa-object-group",
+                _ => "fas fa-question-circle"
+            };
+        }
     }
 }

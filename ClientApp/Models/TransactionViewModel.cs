@@ -146,30 +146,5 @@ namespace FinanceManager.ClientApp.Models
         public decimal PercentageOfTotal { get; set; }
     }
     
-    public class TransactionFilterModel
-    {
-        public DateTimeRange DateRange { get; set; } = DateTimeRange.CurrentMonth();
-        
-        public List<string> AccountIds { get; set; } = new();
-        
-        public List<string> CategoryIds { get; set; } = new();
-        
-        public List<TransactionType> Types { get; set; } = new();
-        
-        public decimal? MinAmount { get; set; }
-        
-        public decimal? MaxAmount { get; set; }
-        
-        public string? SearchTerm { get; set; }
-        
-        public bool IncludePending { get; set; } = true;
-        
-        public string SortBy { get; set; } = "Date";
-        
-        public bool SortAscending { get; set; } = false;
-        
-        public int Page { get; set; } = 1;
-        
-        public int PageSize { get; set; } = 20;
-    }
+    // TransactionFilterModel foi movido para seu próprio arquivo
 }

@@ -146,5 +146,35 @@ namespace FinanceManager.ClientApp.Services
                 return 0;
             }
         }
+        
+        public async Task<InvestmentTransactionViewModel> UpdateInvestmentTransactionAsync(string transactionId, InvestmentTransactionFormModel model)
+        {
+            try
+            {
+                var response = await _httpClient.PutAsJsonAsync($"api/investment-transactions/{transactionId}", model);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<InvestmentTransactionViewModel>();
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return null;
+            }
+        }
+        
+        public async Task<InvestmentTransactionViewModel> AddInvestmentTransactionAsync(InvestmentTransactionFormModel model)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/investment-transactions", model);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<InvestmentTransactionViewModel>();
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return null;
+            }
+        }
     }
 }

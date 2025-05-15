@@ -513,20 +513,20 @@ else
 
     public class AddEditTransactionDialog : ComponentBase
     {
-        [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+        [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
 
-        [Parameter] public string InvestmentId { get; set; }
-        [Parameter] public InvestmentTransactionViewModel Transaction { get; set; }
+        [Parameter] public string InvestmentId { get; set; } = string.Empty;
+        [Parameter] public InvestmentTransactionViewModel Transaction { get; set; } = new();
 
         private bool _isEdit => Transaction != null;
         private InvestmentTransactionFormModel _model = new();
         private bool _isValid;
         private bool _isBusy;
         private string[] _errors = { };
-        private MudForm _form;
+        private MudForm _form = null!;
 
-        [Inject] private IInvestmentService InvestmentService { get; set; }
-        [Inject] private ISnackbar Snackbar { get; set; }
+        [Inject] private IInvestmentService InvestmentService { get; set; } = null!;
+        [Inject] private ISnackbar Snackbar { get; set; } = null!;
 
         protected override void OnInitialized()
         {
@@ -591,8 +591,8 @@ else
 
         private bool ShowQuantityAndPrice(InvestmentTransactionType type)
         {
-            return type == InvestmentTransactionType.BUY || 
-                   type == InvestmentTransactionType.SELL;
+            return type == InvestmentTransactionType.Buy || 
+                   type == InvestmentTransactionType.Sell;
         }
 
         private string GetTransactionTypeIcon(InvestmentTransactionType type)

@@ -12,5 +12,6 @@ namespace FinanceManager.ClientApp.Services.Interfaces
         Task<bool> DeleteCreditCard(string id);
         Task<List<CreditCardTransactionViewModel>> GetCreditCardTransactions(string creditCardId, DateTimeRange dateRange);
         Task<bool> AddCreditCardTransaction(string creditCardId, CreditCardTransactionCreateModel transaction);
+        Task<bool> MarkBillAsPaidAsync(string billId, bool isPaid);
     }
 }

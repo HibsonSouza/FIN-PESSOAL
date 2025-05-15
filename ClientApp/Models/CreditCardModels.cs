@@ -19,6 +19,9 @@ namespace FinanceManager.ClientApp.Models
         
         public decimal AvailableCredit { get; set; }
         
+        // Propriedade calculada para exibição
+        public decimal AvailableLimit => Limit - CurrentBalance;
+        
         public decimal CurrentBalance { get; set; }
         
         public int ClosingDay { get; set; }
@@ -34,6 +37,9 @@ namespace FinanceManager.ClientApp.Models
         public bool IsActive { get; set; } = true;
         
         public string? Notes { get; set; }
+        
+        // Instalamentos ativos
+        public List<CreditCardTransactionViewModel> ActiveInstallments { get; set; } = new List<CreditCardTransactionViewModel>();
         
         public List<CreditCardBillViewModel> RecentBills { get; set; } = new List<CreditCardBillViewModel>();
     }
@@ -130,6 +136,8 @@ namespace FinanceManager.ClientApp.Models
         public DateTime StartDate { get; set; }
         
         public DateTime EndDate { get; set; }
+        
+        public DateTime ClosingDate { get; set; } // Adicionada propriedade faltante
         
         public DateTime DueDate { get; set; }
         
