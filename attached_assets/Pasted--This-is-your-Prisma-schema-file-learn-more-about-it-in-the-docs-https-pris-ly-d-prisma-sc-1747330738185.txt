@@ -1,0 +1,429 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de usuários
+model User {
+  id                String            @id @default(uuid())
+  email             String            @unique
+  password          String
+  name              String
+  phoneNumber       String?
+  avatarUrl         String?
+  isEmailVerified   Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  lastLoginAt       DateTime?
+  
+  // Perfil financeiro
+  financialProfile  FinancialProfile?
+  
+  // Relações principais
+  accounts          Account[]
+  categories        Category[]
+  transactions      Transaction[]
+  budgets           Budget[]
+  goals             Goal[]
+  investments       Investment[]
+  creditCards       CreditCard[]
+  recurringTransactions RecurringTransaction[]
+  notifications     Notification[]
+  reports           Report[]
+  
+  // Para planos familiares
+  familyId          String?
+  family            Family?           @relation(fields: [familyId], references: [id])
+  isHeadOfFamily    Boolean           @default(false)
+  
+  // Configurações e preferências
+  settings          UserSettings?
+  
+  // Assinatura
+  subscriptionId    String?
+  subscription      Subscription?     @relation(fields: [subscriptionId], references: [id])
+}
+
+// Configurações do usuário
+model UserSettings {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency          String    @default("BRL")
+  language          String    @default("pt-BR")
+  theme             String    @default("light")
+  notificationsEnabled Boolean @default(true)
+  budgetAlerts      Boolean   @default(true)
+  weekStartsOn      Int       @default(0) // 0 = Domingo, 1 = Segunda, etc.
+  dateFormat        String    @default("DD/MM/YYYY")
+  backupEnabled     Boolean   @default(true)
+  twoFactorEnabled  Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// Perfil financeiro do usuário
+model FinancialProfile {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monthlyIncome     Float     @default(0)
+  monthlyExpenses   Float     @default(0)
+  riskProfile       String?   // Conservador, Moderado, Arrojado
+  financialGoals    String?   // Objetivos financeiros gerais
+  retirementAge     Int?
+  emergencyFundTarget Float?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// Contas financeiras (conta corrente, poupança, etc)
+model Account {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  type              AccountType
+  balance           Float         @default(0)
+  institution       String?
+  accountNumber     String?
+  agency            String?
+  isActive          Boolean       @default(true)
+  iconName          String?
+  color             String?
+  includeInTotal    Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  transactions      Transaction[]
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  INVESTMENT
+  CASH
+  DIGITAL_WALLET
+  OTHER
+}
+
+// Categorias de transações
+model Category {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  name              String
+  type              TransactionType
+  iconName          String?
+  color             String?
+  isDefault         Boolean       @default(false)
+  parentId          String?
+  parent            Category?     @relation("SubCategories", fields: [parentId], references: [id])
+  subCategories     Category[]    @relation("SubCategories")
+  transactions      Transaction[]
+  budgets           Budget[]
+  recurringTransactions RecurringTransaction[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+// Transações financeiras
+model Transaction {
+  id                String          @id @default(uuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount            Float
+  description       String
+  date              DateTime
+  type              TransactionType
+  categoryId        String?
+  category          Category?       @relation(fields: [categoryId], references: [id])
+  accountId         String
+  account           Account         @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  isReconciled      Boolean         @default(false)
+  notes             String?
+  receiptUrl        String?
+  location          String?
+  tags              String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Para transações de cartão de crédito
+  creditCardId      String?
+  creditCard        CreditCard?     @relation(fields: [creditCardId], references: [id])
+  installmentId     String?
+  installment       Installment?    @relation(fields: [installmentId], references: [id])
+  
+  // Para transações recorrentes
+  recurringTransactionId String?
+  recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  INVESTMENT
+}
+
+// Transações recorrentes (assinaturas, salário, etc)
+model RecurringTransaction {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description       String
+  amount            Float
+  type              TransactionType
+  frequency         RecurringFrequency
+  startDate         DateTime
+  endDate           DateTime?
+  nextOccurrence    DateTime
+  categoryId        String?
+  category          Category?     @relation(fields: [categoryId], references: [id])
+  accountId         String?
+  creditCardId      String?
+  creditCard        CreditCard?   @relation(fields: [creditCardId], references: [id])
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  transactions      Transaction[]
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  BIMONTHLY
+  QUARTERLY
+  SEMIANNUALLY
+  ANNUALLY
+}
+
+// Cartões de crédito
+model CreditCard {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  lastFourDigits    String?
+  limit             Float
+  currentBalance    Float         @default(0)
+  availableLimit    Float         @default(0)
+  closingDay        Int           // Dia do fechamento da fatura
+  dueDay            Int           // Dia do vencimento da fatura
+  bank              String?
+  color             String?
+  iconName          String?
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  transactions      Transaction[]
+  installments      Installment[]
+  bills             CreditCardBill[]
+  recurringTransactions RecurringTransaction[]
+}
+
+// Faturas de cartão de crédito
+model CreditCardBill {
+  id                String        @id @default(uuid())
+  creditCardId      String
+  creditCard        CreditCard    @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  dueDate           DateTime
+  closingDate       DateTime
+  totalAmount       Float
+  isPaid            Boolean       @default(false)
+  paidAmount        Float?
+  paidDate          DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+// Compras parceladas
+model Installment {
+  id                String        @id @default(uuid())
+  creditCardId      String
+  creditCard        CreditCard    @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  description       String
+  totalAmount       Float
+  installmentAmount Float
+  totalInstallments Int
+  currentInstallment Int          @default(1)
+  startDate         DateTime
+  endDate           DateTime
+  transactions      Transaction[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+// Orçamentos
+model Budget {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId        String
+  category          Category      @relation(fields: [categoryId], references: [id])
+  amount            Float
+  period            String        // MONTHLY, QUARTERLY, ANNUAL
+  startDate         DateTime
+  endDate           DateTime?
+  currentSpent      Float         @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+// Metas financeiras
+model Goal {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  targetAmount      Float
+  currentAmount     Float         @default(0)
+  startDate         DateTime
+  targetDate        DateTime
+  description       String?
+  iconName          String?
+  color             String?
+  isCompleted       Boolean       @default(false)
+  completedDate     DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+// Investimentos
+model Investment {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  type              InvestmentType
+  institution       String?
+  initialValue      Float
+  currentValue      Float
+  acquisitionDate   DateTime
+  profitability     Float?        // Rentabilidade em porcentagem
+  risk              String?       // Baixo, Médio, Alto
+  liquidityDays     Int?          // Dias para resgate
+  maturityDate      DateTime?     // Data de vencimento
+  notes             String?
+  isActive          Boolean       @default(true)
+  transactions      InvestmentTransaction[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+enum InvestmentType {
+  SAVINGS
+  FIXED_INCOME
+  STOCKS
+  FUNDS
+  REAL_ESTATE
+  CRYPTO
+  FOREX
+  OTHER
+}
+
+// Transações de investimentos (aportes, resgates, dividendos)
+model InvestmentTransaction {
+  id                String        @id @default(uuid())
+  investmentId      String
+  investment        Investment    @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  type              InvestmentTransactionType
+  amount            Float
+  date              DateTime
+  price             Float?        // Preço unitário (para ações)
+  quantity          Float?        // Quantidade (para ações)
+  taxes             Float?        // Impostos ou taxas
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+enum InvestmentTransactionType {
+  BUY
+  SELL
+  DIVIDEND
+  INTEREST
+  CONTRIBUTION
+  WITHDRAWAL
+  TAX
+  FEE
+}
+
+// Notificações
+model Notification {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title             String
+  message           String
+  type              NotificationType
+  isRead            Boolean       @default(false)
+  actionUrl         String?
+  createdAt         DateTime      @default(now())
+}
+
+enum NotificationType {
+  BILL_DUE
+  BUDGET_ALERT
+  GOAL_COMPLETE
+  CARD_LIMIT
+  TRANSACTION_ALERT
+  SYSTEM
+}
+
+// Relatórios salvos
+model Report {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  type              ReportType
+  params            Json?         // Parâmetros do relatório em formato JSON
+  lastGenerated     DateTime
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+enum ReportType {
+  EXPENSES
+  INCOME
+  CASH_FLOW
+  INVESTMENTS
+  BUDGET
+  ASSETS
+  TAX
+}
+
+// Assinaturas (planos pagos)
+model Subscription {
+  id                String        @id @default(uuid())
+  name              String        // Free, Premium, Family
+  price             Float
+  billingPeriod     String        // Monthly, Annual
+  features          String[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  users             User[]
+}
+
+// Modelo para planos familiares
+model Family {
+  id                String        @id @default(uuid())
+  name              String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  members           User[]
+}

@@ -1,0 +1,189 @@
+flowchart TD
+    %% Definição de estilos
+    classDef frontend fill:#f0f5ff,stroke:#597ef7,stroke-width:2px
+    classDef backend fill:#f6ffed,stroke:#52c41a,stroke-width:2px
+    classDef database fill:#fff2e8,stroke:#fa8c16,stroke-width:2px
+
+    %% Entrada do Usuário
+    UserEntry[Usuário acessa o aplicativo]
+
+    %% Fluxo de Autenticação
+    subgraph Autenticação
+        Login[Tela de Login]
+        Register[Tela de Cadastro]
+        ForgotPassword[Recuperação de Senha]
+        TwoFactor[Autenticação 2FA]
+    end
+
+    %% Fluxo de Onboarding
+    subgraph Onboarding
+        Welcome[Tela de Boas-vindas]
+        ProfileSetup[Configuração de Perfil]
+        InitialAccounts[Cadastro de Contas Iniciais]
+        InitialCards[Cadastro de Cartões Iniciais]
+    end
+
+    %% Dashboard Principal
+    Dashboard[Dashboard Principal]
+
+    %% Módulos Principais do App
+    subgraph MódulosPrincipais
+        AccountsModule[Módulo de Contas]
+        TransactionsModule[Módulo de Transações]
+        CardsModule[Módulo de Cartões]
+        BudgetModule[Módulo de Orçamentos]
+        InvestmentsModule[Módulo de Investimentos]
+        ReportsModule[Módulo de Relatórios]
+        SettingsModule[Módulo de Configurações]
+    end
+
+    %% Detalhamento de cada Módulo
+    subgraph Contas
+        AccountsList[Lista de Contas]
+        AccountDetails[Detalhes da Conta]
+        AddAccount[Adicionar Conta]
+        EditAccount[Editar Conta]
+    end
+
+    subgraph Transações
+        TransactionsList[Lista de Transações]
+        AddTransaction[Adicionar Transação]
+        EditTransaction[Editar Transação]
+        ImportTransactions[Importar Transações]
+        RecurringTransactions[Transações Recorrentes]
+    end
+
+    subgraph Cartões
+        CardsList[Lista de Cartões]
+        CardDetails[Detalhes do Cartão]
+        CardStatement[Fatura do Cartão]
+        Installments[Compras Parceladas]
+    end
+
+    subgraph Orçamentos
+        BudgetOverview[Visão Geral do Orçamento]
+        CategoryBudgets[Orçamento por Categoria]
+        BudgetAnalysis[Análise de Gastos vs Orçamento]
+    end
+
+    subgraph Investimentos
+        InvestmentsOverview[Visão Geral de Investimentos]
+        InvestmentDetails[Detalhes do Investimento]
+        PortfolioAnalysis[Análise de Portfólio]
+    end
+
+    subgraph Relatórios
+        ReportsHome[Central de Relatórios]
+        ExpenseReport[Relatório de Despesas]
+        IncomeReport[Relatório de Receitas]
+        CashflowReport[Relatório de Fluxo de Caixa]
+        ExportOption[Exportar Relatório]
+    end
+
+    subgraph Configurações
+        UserProfile[Perfil de Usuário]
+        AppSettings[Configurações do App]
+        Categories[Gerenciar Categorias]
+        Subscription[Gerenciar Assinatura]
+        SecuritySettings[Segurança e Privacidade]
+    end
+
+    %% Arquitetura Técnica
+    subgraph ArquiteturaTécnica
+        subgraph Frontend
+            BlazorApp[Aplicativo Blazor]
+            MudBlazor[Biblioteca MudBlazor]
+            StateManagement[Gerenciamento de Estado]
+        end
+
+        subgraph Backend
+            ASPNET[ASP.NET Core API]
+            Controllers[Controllers da API]
+            Services[Serviços de Negócio]
+            PrismaClient[Prisma Client]
+        end
+
+        subgraph InfraestruturaDados
+            PostgreSQL[Banco PostgreSQL]
+            SupabaseAuth[Supabase Auth]
+            DockerContainers[Containers Docker]
+            UbuntuServer[Servidor Ubuntu]
+        end
+    end
+
+    %% Conexões do Fluxo do Usuário
+    UserEntry --> Login
+    Login --> Register
+    Login --> ForgotPassword
+    Login --> TwoFactor
+    Login --> Dashboard
+    Register --> Welcome
+    Welcome --> ProfileSetup
+    ProfileSetup --> InitialAccounts
+    InitialAccounts --> InitialCards
+    InitialCards --> Dashboard
+
+    %% Navegação do Dashboard para os Módulos
+    Dashboard --> AccountsModule
+    Dashboard --> TransactionsModule
+    Dashboard --> CardsModule
+    Dashboard --> BudgetModule
+    Dashboard --> InvestmentsModule
+    Dashboard --> ReportsModule
+    Dashboard --> SettingsModule
+
+    %% Detalhamento dos Módulos
+    AccountsModule --> AccountsList
+    AccountsList --> AccountDetails
+    AccountsList --> AddAccount
+    AccountDetails --> EditAccount
+
+    TransactionsModule --> TransactionsList
+    TransactionsList --> AddTransaction
+    TransactionsList --> EditTransaction
+    TransactionsList --> ImportTransactions
+    TransactionsList --> RecurringTransactions
+
+    CardsModule --> CardsList
+    CardsList --> CardDetails
+    CardDetails --> CardStatement
+    CardDetails --> Installments
+
+    BudgetModule --> BudgetOverview
+    BudgetOverview --> CategoryBudgets
+    BudgetOverview --> BudgetAnalysis
+
+    InvestmentsModule --> InvestmentsOverview
+    InvestmentsOverview --> InvestmentDetails
+    InvestmentsOverview --> PortfolioAnalysis
+
+    ReportsModule --> ReportsHome
+    ReportsHome --> ExpenseReport
+    ReportsHome --> IncomeReport
+    ReportsHome --> CashflowReport
+    ExpenseReport --> ExportOption
+    IncomeReport --> ExportOption
+    CashflowReport --> ExportOption
+
+    SettingsModule --> UserProfile
+    SettingsModule --> AppSettings
+    SettingsModule --> Categories
+    SettingsModule --> Subscription
+    SettingsModule --> SecuritySettings
+
+    %% Conexões entre componentes técnicos
+    BlazorApp --> MudBlazor
+    BlazorApp --> StateManagement
+    BlazorApp --> ASPNET
+    ASPNET --> Controllers
+    Controllers --> Services
+    Services --> PrismaClient
+    PrismaClient --> PostgreSQL
+    BlazorApp --> SupabaseAuth
+    PostgreSQL --> SupabaseAuth
+    DockerContainers --> UbuntuServer
+    
+    %% Aplicação de classes
+    class Frontend frontend
+    class Backend backend
+    class InfraestruturaDados database
