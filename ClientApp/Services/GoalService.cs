@@ -5,21 +5,21 @@ using System.Text.Json;
 
 namespace FinanceManager.ClientApp.Services
 {
-    public class BudgetService : IBudgetService
+    public class GoalService : IGoalService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _apiEndpoint = "api/budgets";
+        private readonly string _apiEndpoint = "api/goals";
         private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         };
 
-        public BudgetService(HttpClient httpClient)
+        public GoalService(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
 
-        public async Task<List<BudgetViewModel>> GetBudgets()
+        public async Task<List<GoalViewModel>> GetGoals()
         {
             try
             {
@@ -27,19 +27,19 @@ namespace FinanceManager.ClientApp.Services
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<BudgetViewModel>>(_jsonOptions) 
-                        ?? new List<BudgetViewModel>();
+                    return await response.Content.ReadFromJsonAsync<List<GoalViewModel>>(_jsonOptions) 
+                        ?? new List<GoalViewModel>();
                 }
                 
-                return new List<BudgetViewModel>();
+                return new List<GoalViewModel>();
             }
             catch
             {
-                return new List<BudgetViewModel>();
+                return new List<GoalViewModel>();
             }
         }
 
-        public async Task<BudgetViewModel> GetBudgetById(string id)
+        public async Task<GoalViewModel> GetGoalById(string id)
         {
             try
             {
@@ -47,23 +47,23 @@ namespace FinanceManager.ClientApp.Services
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<BudgetViewModel>(_jsonOptions) 
-                        ?? new BudgetViewModel();
+                    return await response.Content.ReadFromJsonAsync<GoalViewModel>(_jsonOptions) 
+                        ?? new GoalViewModel();
                 }
                 
-                return new BudgetViewModel();
+                return new GoalViewModel();
             }
             catch
             {
-                return new BudgetViewModel();
+                return new GoalViewModel();
             }
         }
 
-        public async Task<bool> CreateBudget(BudgetCreateModel budget)
+        public async Task<bool> CreateGoal(GoalCreateModel goal)
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync(_apiEndpoint, budget);
+                var response = await _httpClient.PostAsJsonAsync(_apiEndpoint, goal);
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -72,11 +72,11 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<bool> UpdateBudget(string id, BudgetUpdateModel budget)
+        public async Task<bool> UpdateGoal(string id, GoalUpdateModel goal)
         {
             try
             {
-                var response = await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/{id}", budget);
+                var response = await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/{id}", goal);
                 return response.IsSuccessStatusCode;
             }
             catch
@@ -85,7 +85,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<bool> DeleteBudget(string id)
+        public async Task<bool> DeleteGoal(string id)
         {
             try
             {
@@ -98,23 +98,16 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<List<BudgetProgressViewModel>> GetCurrentBudgetProgress()
+        public async Task<bool> AddContribution(string goalId, GoalContributionModel contribution)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_apiEndpoint}/progress");
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadFromJsonAsync<List<BudgetProgressViewModel>>(_jsonOptions) 
-                        ?? new List<BudgetProgressViewModel>();
-                }
-                
-                return new List<BudgetProgressViewModel>();
+                var response = await _httpClient.PostAsJsonAsync($"{_apiEndpoint}/{goalId}/contributions", contribution);
+                return response.IsSuccessStatusCode;
             }
             catch
             {
-                return new List<BudgetProgressViewModel>();
+                return false;
             }
         }
     }

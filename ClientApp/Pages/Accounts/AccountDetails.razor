@@ -8,6 +8,7 @@
 @inject ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
 @implements IDisposable
+@using MudBlazor
 
 <PageTitle>Account Details - Finance Manager</PageTitle>
 
@@ -210,7 +211,7 @@ else
     private List<TransactionViewModel> _transactions = new();
     private bool _isLoading = true;
     private bool _isTransactionsLoading = true;
-    private DateRange _dateRange = new(DateTime.Now.AddMonths(-1), DateTime.Now);
+    private MudBlazor.DateRange _dateRange = new(DateTime.Now.AddMonths(-1), DateTime.Now);
     private string _balanceHistoryChartId = "balanceHistoryChart";
 
     protected override async Task OnInitializedAsync()

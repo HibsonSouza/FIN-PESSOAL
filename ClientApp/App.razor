@@ -1,59 +1,42 @@
-@using FinanceManager.ClientApp.Components.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
 
-<Router AppAssembly="@typeof(Program).Assembly">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-            <NotAuthorized>
-                @if (context.User.Identity?.IsAuthenticated != true)
-                {
-                    <RedirectToLogin />
-                }
-                else
-                {
-                    <p class="not-authorized">Você não está autorizado a acessar esta página.</p>
-                }
-            </NotAuthorized>
-            <Authorizing>
-                <div class="loading-indicator">
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <RedirectToLogin />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.h5" Color="Color.Error" Class="pa-4">
+                            Você não tem permissão para acessar esta página.
+                        </MudText>
+                    }
+                </NotAuthorized>
+                <Authorizing>
                     <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                    <p>Autorizando...</p>
-                </div>
-            </Authorizing>
-        </AuthorizeRouteView>
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>Página não encontrada</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-8 mt-16">
-                <MudPaper Elevation="3" Class="pa-8 text-center">
-                    <MudText Typo="Typo.h4" Class="mb-4">404 - Página não encontrada</MudText>
-                    <MudText Typo="Typo.body1" Class="mb-6">A página que você está procurando não existe ou foi removida.</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/" Class="mx-auto">Voltar para a página inicial</MudButton>
-                </MudPaper>
-            </MudContainer>
-        </LayoutView>
-    </NotFound>
-</Router>
+                </Authorizing>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Não Encontrado</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <MudContainer Class="mt-16 d-flex flex-column align-center">
+                    <MudText Typo="Typo.h3" Color="Color.Error" Class="mb-4">404 - Página não encontrada</MudText>
+                    <MudText Typo="Typo.subtitle1" Class="mb-8">A página que você está procurando não existe ou foi movida.</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="/" Class="mt-4">
+                        Voltar para a página inicial
+                    </MudButton>
+                </MudContainer>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
 
-<style>
-    .loading-indicator {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-    }
-    
-    .loading-indicator p {
-        margin-top: 16px;
-        font-size: 18px;
-    }
-    
-    .not-authorized {
-        text-align: center;
-        margin-top: 48px;
-        color: #f44336;
-        font-size: 24px;
-    }
-</style>
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />

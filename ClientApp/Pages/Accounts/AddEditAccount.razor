@@ -4,6 +4,7 @@
 @inject IAccountService AccountService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@using MudBlazor
 
 <PageTitle>@(_isEditing ? "Edit Account" : "Add Account") - Finance Manager</PageTitle>
 
@@ -201,7 +202,7 @@
     private bool _isIconPickerOpen = false;
     private string[] _errors = { };
     private MudForm _form;
-    private AccountFormModel _model = new();
+    private AccountCreateModel _model = new();
     private MudColor _colorValue = new("#1976d2");
 
     private readonly string[] _availableIcons = new[]

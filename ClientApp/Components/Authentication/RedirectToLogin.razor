@@ -1,9 +1,16 @@
 @inject NavigationManager NavigationManager
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 @code {
     protected override void OnInitialized()
     {
-        NavigationManager.NavigateTo($"login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}", forceLoad: false);
+        var returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        if (string.IsNullOrEmpty(returnUrl))
+        {
+            NavigationManager.NavigateTo("login", forceLoad: false);
+        }
+        else
+        {
+            NavigationManager.NavigateTo($"login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: false);
+        }
     }
 }

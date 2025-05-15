@@ -1,63 +1,68 @@
-using System;
-using System.Collections.Generic;
-using FinanceManager.ClientApp.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace FinanceManager.ClientApp.Models
 {
     public class AccountViewModel
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string Id { get; set; } = string.Empty;
+        
+        public string Name { get; set; } = string.Empty;
+        
+        public string Type { get; set; } = string.Empty;
+        
+        public string BankName { get; set; } = string.Empty;
+        
         public decimal Balance { get; set; }
-        public string BankName { get; set; }
-        public AccountType Type { get; set; }
-        public string AccountNumber { get; set; }
-        public string Agency { get; set; }
-        public string Icon { get; set; }
-        public string Color { get; set; }
+        
         public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? LastUpdatedAt { get; set; }
-        public bool IncludeInTotal { get; set; } = true;
-        public List<TransactionViewModel> RecentTransactions { get; set; }
+        
+        public string? Color { get; set; }
+        
+        public string? Description { get; set; }
+        
+        public List<TransactionViewModel> RecentTransactions { get; set; } = new();
     }
-
-    public enum AccountType
-    {
-        Checking,
-        Savings,
-        Investment,
-        CreditCard,
-        Cash,
-        Other
-    }
-
+    
     public class AccountCreateModel
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
+        [Required(ErrorMessage = "O nome é obrigatório")]
+        [StringLength(50, ErrorMessage = "O nome deve ter no máximo 50 caracteres")]
+        public string Name { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "O tipo é obrigatório")]
+        public string Type { get; set; } = "Corrente";
+        
+        [Required(ErrorMessage = "O nome do banco é obrigatório")]
+        [StringLength(50, ErrorMessage = "O nome do banco deve ter no máximo 50 caracteres")]
+        public string BankName { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "O saldo inicial é obrigatório")]
         public decimal InitialBalance { get; set; }
-        public string BankName { get; set; }
-        public AccountType Type { get; set; }
-        public string AccountNumber { get; set; }
-        public string Agency { get; set; }
-        public string Icon { get; set; }
-        public string Color { get; set; }
-        public bool IncludeInTotal { get; set; } = true;
+        
+        public bool IsActive { get; set; } = true;
+        
+        public string? Color { get; set; }
+        
+        public string? Description { get; set; }
     }
-
+    
     public class AccountUpdateModel
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string BankName { get; set; }
-        public AccountType Type { get; set; }
-        public string AccountNumber { get; set; }
-        public string Agency { get; set; }
-        public string Icon { get; set; }
-        public string Color { get; set; }
+        [Required(ErrorMessage = "O nome é obrigatório")]
+        [StringLength(50, ErrorMessage = "O nome deve ter no máximo 50 caracteres")]
+        public string Name { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "O tipo é obrigatório")]
+        public string Type { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "O nome do banco é obrigatório")]
+        [StringLength(50, ErrorMessage = "O nome do banco deve ter no máximo 50 caracteres")]
+        public string BankName { get; set; } = string.Empty;
+        
         public bool IsActive { get; set; }
-        public bool IncludeInTotal { get; set; }
+        
+        public string? Color { get; set; }
+        
+        public string? Description { get; set; }
     }
 }

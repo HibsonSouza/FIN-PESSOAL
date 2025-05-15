@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "4bguQGSyUuY=",
+  "dgSpecHash": "lVPFGIl44BY=",
   "success": true,
   "projectFilePath": "/home/runner/workspace/ClientApp/BlazorFinanceManager.csproj",
   "expectedPackageFiles": [
@@ -8,6 +8,7 @@
     "/home/runner/.nuget/packages/microsoft.aspnetcore.authorization/8.0.2/microsoft.aspnetcore.authorization.8.0.2.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.aspnetcore.components/8.0.2/microsoft.aspnetcore.components.8.0.2.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.aspnetcore.components.analyzers/8.0.2/microsoft.aspnetcore.components.analyzers.8.0.2.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.aspnetcore.components.authorization/8.0.2/microsoft.aspnetcore.components.authorization.8.0.2.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.aspnetcore.components.forms/8.0.2/microsoft.aspnetcore.components.forms.8.0.2.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.aspnetcore.components.web/8.0.2/microsoft.aspnetcore.components.web.8.0.2.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.aspnetcore.components.webassembly/8.0.2/microsoft.aspnetcore.components.webassembly.8.0.2.nupkg.sha512",
@@ -20,25 +21,46 @@
     "/home/runner/.nuget/packages/microsoft.extensions.configuration.json/8.0.0/microsoft.extensions.configuration.json.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.dependencyinjection/8.0.0/microsoft.extensions.dependencyinjection.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.0/microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.extensions.diagnostics/8.0.0/microsoft.extensions.diagnostics.8.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.extensions.diagnostics.abstractions/8.0.0/microsoft.extensions.diagnostics.abstractions.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.fileproviders.abstractions/8.0.0/microsoft.extensions.fileproviders.abstractions.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.fileproviders.physical/8.0.0/microsoft.extensions.fileproviders.physical.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.filesystemglobbing/8.0.0/microsoft.extensions.filesystemglobbing.8.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.extensions.http/8.0.0/microsoft.extensions.http.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.localization/8.0.1/microsoft.extensions.localization.8.0.1.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.localization.abstractions/8.0.1/microsoft.extensions.localization.abstractions.8.0.1.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.logging/8.0.0/microsoft.extensions.logging.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.logging.abstractions/8.0.0/microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.options/8.0.2/microsoft.extensions.options.8.0.2.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.extensions.options.configurationextensions/8.0.0/microsoft.extensions.options.configurationextensions.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.extensions.primitives/8.0.0/microsoft.extensions.primitives.8.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.identitymodel.abstractions/7.0.3/microsoft.identitymodel.abstractions.7.0.3.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.identitymodel.jsonwebtokens/7.0.3/microsoft.identitymodel.jsonwebtokens.7.0.3.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.identitymodel.logging/7.0.3/microsoft.identitymodel.logging.7.0.3.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.identitymodel.tokens/7.0.3/microsoft.identitymodel.tokens.7.0.3.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.jsinterop/8.0.2/microsoft.jsinterop.8.0.2.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.jsinterop.webassembly/8.0.2/microsoft.jsinterop.webassembly.8.0.2.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.net.illink.tasks/8.0.11/microsoft.net.illink.tasks.8.0.11.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.net.sdk.webassembly.pack/8.0.11/microsoft.net.sdk.webassembly.pack.8.0.11.nupkg.sha512",
     "/home/runner/.nuget/packages/mudblazor/6.15.0/mudblazor.6.15.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.diagnostics.diagnosticsource/8.0.0/system.diagnostics.diagnosticsource.8.0.0.nupkg.sha512",
+    "/home/runner/.nuget/packages/system.identitymodel.tokens.jwt/7.0.3/system.identitymodel.tokens.jwt.7.0.3.nupkg.sha512",
     "/home/runner/.nuget/packages/system.io.pipelines/8.0.0/system.io.pipelines.8.0.0.nupkg.sha512",
-    "/home/runner/.nuget/packages/system.net.http.json/8.0.0/system.net.http.json.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/system.text.encodings.web/8.0.0/system.text.encodings.web.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/system.text.json/8.0.0/system.text.json.8.0.0.nupkg.sha512",
     "/home/runner/.nuget/packages/microsoft.netcore.app.runtime.mono.browser-wasm/8.0.11/microsoft.netcore.app.runtime.mono.browser-wasm.8.0.11.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'System.IdentityModel.Tokens.Jwt' 7.0.3 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-59j7-ghrg-fj52",
+      "libraryId": "System.IdentityModel.Tokens.Jwt",
+      "targetGraphs": [
+        "net8.0",
+        "net8.0/browser-wasm"
+      ]
+    }
+  ]
 }

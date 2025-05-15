@@ -1,138 +1,134 @@
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 using FinanceManager.ClientApp.Models;
 using FinanceManager.ClientApp.Services.Interfaces;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace FinanceManager.ClientApp.Services
 {
     public class CreditCardService : ICreditCardService
     {
         private readonly HttpClient _httpClient;
+        private readonly string _apiEndpoint = "api/creditcards";
+        private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public CreditCardService(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
 
-        public async Task<List<CreditCardViewModel>> GetCreditCardsAsync()
+        public async Task<List<CreditCardViewModel>> GetCreditCards()
         {
             try
             {
-                var creditCards = await _httpClient.GetFromJsonAsync<List<CreditCardViewModel>>("api/credit-cards");
-                return creditCards ?? new List<CreditCardViewModel>();
+                var response = await _httpClient.GetAsync(_apiEndpoint);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<List<CreditCardViewModel>>(_jsonOptions) 
+                        ?? new List<CreditCardViewModel>();
+                }
+                
+                return new List<CreditCardViewModel>();
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
                 return new List<CreditCardViewModel>();
             }
         }
 
-        public async Task<CreditCardViewModel> GetCreditCardByIdAsync(int id)
+        public async Task<CreditCardViewModel> GetCreditCardById(string id)
         {
             try
             {
-                return await _httpClient.GetFromJsonAsync<CreditCardViewModel>($"api/credit-cards/{id}");
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/{id}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<CreditCardViewModel>(_jsonOptions) 
+                        ?? new CreditCardViewModel();
+                }
+                
+                return new CreditCardViewModel();
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
-                return null;
+                return new CreditCardViewModel();
             }
         }
 
-        public async Task<CreditCardViewModel> CreateCreditCardAsync(CreditCardCreateModel creditCard)
+        public async Task<bool> CreateCreditCard(CreditCardCreateModel creditCard)
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/credit-cards", creditCard);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<CreditCardViewModel>();
-            }
-            catch (Exception)
-            {
-                // Em uma aplicação real, você deve registrar o erro
-                return null;
-            }
-        }
-
-        public async Task<CreditCardViewModel> UpdateCreditCardAsync(int id, CreditCardUpdateModel creditCard)
-        {
-            try
-            {
-                var response = await _httpClient.PutAsJsonAsync($"api/credit-cards/{id}", creditCard);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<CreditCardViewModel>();
-            }
-            catch (Exception)
-            {
-                // Em uma aplicação real, você deve registrar o erro
-                return null;
-            }
-        }
-
-        public async Task<bool> DeleteCreditCardAsync(int id)
-        {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/credit-cards/{id}");
+                var response = await _httpClient.PostAsJsonAsync(_apiEndpoint, creditCard);
                 return response.IsSuccessStatusCode;
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
                 return false;
             }
         }
 
-        public async Task<CreditCardStatementModel> GetCurrentStatementAsync(int id)
+        public async Task<bool> UpdateCreditCard(string id, CreditCardUpdateModel creditCard)
         {
             try
             {
-                return await _httpClient.GetFromJsonAsync<CreditCardStatementModel>($"api/credit-cards/{id}/current-statement");
+                var response = await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/{id}", creditCard);
+                return response.IsSuccessStatusCode;
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
-                return null;
+                return false;
             }
         }
 
-        public async Task<List<CreditCardStatementViewModel>> GetStatementsHistoryAsync(int id, int count = 6)
+        public async Task<bool> DeleteCreditCard(string id)
         {
             try
             {
-                return await _httpClient.GetFromJsonAsync<List<CreditCardStatementViewModel>>(
-                    $"api/credit-cards/{id}/statements?count={count}");
+                var response = await _httpClient.DeleteAsync($"{_apiEndpoint}/{id}");
+                return response.IsSuccessStatusCode;
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
-                return new List<CreditCardStatementViewModel>();
+                return false;
             }
         }
 
-        public async Task<List<TransactionViewModel>> GetCreditCardTransactionsAsync(int id, DateTime? startDate = null, DateTime? endDate = null)
+        public async Task<List<CreditCardTransactionViewModel>> GetCreditCardTransactions(string creditCardId, DateTimeRange dateRange)
         {
             try
             {
-                string url = $"api/credit-cards/{id}/transactions?";
+                var response = await _httpClient.GetAsync(
+                    $"{_apiEndpoint}/{creditCardId}/transactions?startDate={dateRange.Start:yyyy-MM-dd}&endDate={dateRange.End:yyyy-MM-dd}");
                 
-                if (startDate.HasValue)
-                    url += $"startDate={startDate:yyyy-MM-dd}&";
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<List<CreditCardTransactionViewModel>>(_jsonOptions) 
+                        ?? new List<CreditCardTransactionViewModel>();
+                }
                 
-                if (endDate.HasValue)
-                    url += $"endDate={endDate:yyyy-MM-dd}";
-                
-                return await _httpClient.GetFromJsonAsync<List<TransactionViewModel>>(url);
+                return new List<CreditCardTransactionViewModel>();
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
-                return new List<TransactionViewModel>();
+                return new List<CreditCardTransactionViewModel>();
+            }
+        }
+
+        public async Task<bool> AddCreditCardTransaction(string creditCardId, CreditCardTransactionCreateModel transaction)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync($"{_apiEndpoint}/{creditCardId}/transactions", transaction);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

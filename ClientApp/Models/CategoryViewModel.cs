@@ -1,44 +1,72 @@
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace FinanceManager.ClientApp.Models
 {
     public class CategoryViewModel
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public CategoryType Type { get; set; }
-        public string Icon { get; set; }
-        public string Color { get; set; }
-        public int? ParentCategoryId { get; set; }
-        public string ParentCategoryName { get; set; }
-        public List<CategoryViewModel> Subcategories { get; set; } = new List<CategoryViewModel>();
+        public string Id { get; set; } = string.Empty;
+        
+        public string Name { get; set; } = string.Empty;
+        
+        public TransactionType Type { get; set; }
+        
+        public string? Color { get; set; }
+        
+        public string? Icon { get; set; }
+        
+        public string? ParentCategoryId { get; set; }
+        
+        public string? ParentCategoryName { get; set; }
+        
+        public bool IsSystem { get; set; }
     }
-
-    public enum CategoryType
-    {
-        Income,
-        Expense,
-        Both
-    }
-
+    
     public class CategoryCreateModel
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public CategoryType Type { get; set; }
-        public string Icon { get; set; }
-        public string Color { get; set; }
-        public int? ParentCategoryId { get; set; }
+        [Required(ErrorMessage = "O nome é obrigatório")]
+        [StringLength(50, ErrorMessage = "O nome deve ter no máximo 50 caracteres")]
+        public string Name { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "O tipo é obrigatório")]
+        public TransactionType Type { get; set; } = TransactionType.Expense;
+        
+        public string? Color { get; set; }
+        
+        public string? Icon { get; set; }
+        
+        public string? ParentCategoryId { get; set; }
     }
-
+    
     public class CategoryUpdateModel
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public CategoryType Type { get; set; }
-        public string Icon { get; set; }
-        public string Color { get; set; }
-        public int? ParentCategoryId { get; set; }
+        [Required(ErrorMessage = "O nome é obrigatório")]
+        [StringLength(50, ErrorMessage = "O nome deve ter no máximo 50 caracteres")]
+        public string Name { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "O tipo é obrigatório")]
+        public TransactionType Type { get; set; }
+        
+        public string? Color { get; set; }
+        
+        public string? Icon { get; set; }
+        
+        public string? ParentCategoryId { get; set; }
+    }
+    
+    public class CategorySummaryModel
+    {
+        public string CategoryId { get; set; } = string.Empty;
+        
+        public string CategoryName { get; set; } = string.Empty;
+        
+        public string? Color { get; set; }
+        
+        public string? Icon { get; set; }
+        
+        public TransactionType Type { get; set; }
+        
+        public decimal TotalAmount { get; set; }
+        
+        public decimal Percentage { get; set; }
     }
 }
