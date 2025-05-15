@@ -1,134 +1,114 @@
 @page "/login"
-@layout Components.Layout.EmptyLayout
+@using System.ComponentModel.DataAnnotations
 @using FinanceManager.ClientApp.Services.Interfaces
-@using FinanceManager.ClientApp.Models
-
 @inject IAuthenticationService AuthService
-@inject NavigationManager NavigationManager
-@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@layout EmptyLayout
 
-<div class="login-container">
-    <MudCard Elevation="4" Class="px-4 py-8" Style="width: 100%; max-width: 450px;">
-        <MudCardHeader>
-            <CardHeaderContent>
-                <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-4">Gerenciador Financeiro</MudText>
-                <MudText Typo="Typo.h5" Align="Align.Center">Login</MudText>
-            </CardHeaderContent>
-        </MudCardHeader>
-        <MudCardContent>
-            <EditForm Model="@loginModel" OnValidSubmit="HandleValidSubmit">
-                <DataAnnotationsValidator />
-                
-                <MudTextField Label="Email" 
-                            @bind-Value="loginModel.Email" 
-                            For="@(() => loginModel.Email)"
-                            Variant="Variant.Outlined" 
-                            Margin="Margin.Dense"
-                            FullWidth="true" 
-                            Required="true"
-                            InputType="InputType.Email"
-                            Class="mb-4" />
-                
-                <MudTextField Label="Senha" 
-                            @bind-Value="loginModel.Password" 
-                            For="@(() => loginModel.Password)"
-                            Variant="Variant.Outlined" 
-                            Margin="Margin.Dense"
-                            FullWidth="true" 
-                            Required="true"
-                            InputType="@(_passwordVisible ? InputType.Text : InputType.Password)"
-                            Adornment="Adornment.End"
-                            AdornmentIcon="@(_passwordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
-                            OnAdornmentClick="() => _passwordVisible = !_passwordVisible"
-                            AdornmentAriaLabel="Mostrar senha"
-                            Class="mb-2" />
-                
-                <MudCheckBox @bind-Checked="loginModel.RememberMe" Label="Lembrar-me" Color="Color.Primary" Class="mb-4" />
-                
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           ButtonType="ButtonType.Submit" 
-                           FullWidth="true"
-                           Size="Size.Large"
-                           Disabled="@_processing">
-                    @if (_processing)
+<PageTitle>Login - Gerenciador Financeiro</PageTitle>
+
+<MudCard Class="pa-6" Elevation="10" Style="max-width: 500px;">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h4" Class="my-4">Gerenciador Financeiro</MudText>
+            <MudText Typo="Typo.h6">Entrar na sua conta</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    
+    <MudCardContent>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4">@errorMessage</MudAlert>
+            }
+            
+            <MudTextField @bind-Value="model.Email" Label="Email" 
+                         Variant="Variant.Outlined" Class="mt-3" 
+                         FullWidth="true" Required="true" 
+                         InputType="InputType.Email" />
+            
+            <MudTextField @bind-Value="model.Password" Label="Senha" 
+                         Variant="Variant.Outlined" Class="mt-4" 
+                         FullWidth="true" Required="true" 
+                         InputType="InputType.Password" />
+            
+            <MudCheckBox @bind-Checked="model.RememberMe" Label="Lembrar de mim" 
+                        Color="Color.Primary" Class="mt-4" />
+            
+            <div class="d-flex justify-space-between align-center mt-4">
+                <MudLink Href="/esqueci-senha">Esqueceu a senha?</MudLink>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                          ButtonType="ButtonType.Submit" Disabled="@isLoading">
+                    @if (isLoading)
                     {
                         <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                        <span>Processando...</span>
+                        <MudText>Entrando...</MudText>
                     }
                     else
                     {
-                        <span>Entrar</span>
+                        <MudText>Entrar</MudText>
                     }
                 </MudButton>
-                
-                @if (!string.IsNullOrEmpty(_errorMessage))
-                {
-                    <MudAlert Severity="Severity.Error" Class="mt-4">@_errorMessage</MudAlert>
-                }
-            </EditForm>
-            
-            <MudDivider Class="my-4" />
-            
-            <MudStack Row="true" Justify="Justify.SpaceBetween">
-                <MudLink Href="forgot-password" Underline="Underline.Always">Esqueceu sua senha?</MudLink>
-                <MudLink Href="register" Underline="Underline.Always">Criar conta</MudLink>
-            </MudStack>
-        </MudCardContent>
-    </MudCard>
-</div>
-
-<style>
-    .login-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
-        padding: 1rem;
-    }
-</style>
+            </div>
+        </EditForm>
+    </MudCardContent>
+    
+    <MudCardActions Class="pb-4 px-6 d-flex justify-center">
+        <MudText>Não tem uma conta? <MudLink Href="/registro">Cadastre-se</MudLink></MudText>
+    </MudCardActions>
+</MudCard>
 
 @code {
-    private LoginModel loginModel = new LoginModel();
-    private bool _processing = false;
-    private bool _passwordVisible = false;
-    private string _errorMessage = string.Empty;
-
-    protected override void OnInitialized()
+    private LoginModel model = new LoginModel();
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+    
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string ReturnUrl { get; set; }
+    
+    private async Task OnValidSubmit()
     {
-        // Verifica se já está autenticado
-        if (AuthService.IsAuthenticated)
-        {
-            NavigationManager.NavigateTo("/");
-        }
-    }
-
-    private async Task HandleValidSubmit()
-    {
-        _processing = true;
-        _errorMessage = string.Empty;
-
+        isLoading = true;
+        errorMessage = string.Empty;
+        
         try
         {
-            var result = await AuthService.LoginAsync(loginModel);
+            var result = await AuthService.Login(model.Email, model.Password);
             
             if (result.Success)
             {
-                Snackbar.Add("Login realizado com sucesso!", Severity.Success);
-                NavigationManager.NavigateTo("/");
+                var url = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
+                Navigation.NavigateTo(url);
             }
             else
             {
-                _errorMessage = result.Message ?? "Erro ao realizar login. Verifique suas credenciais.";
+                errorMessage = result.Message;
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Erro: {ex.Message}";
+            errorMessage = "Ocorreu um erro ao tentar fazer login. Por favor, tente novamente.";
+            Console.WriteLine($"Erro ao fazer login: {ex.Message}");
         }
         finally
         {
-            _processing = false;
+            isLoading = false;
         }
+    }
+    
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "O email é obrigatório")]
+        [EmailAddress(ErrorMessage = "O email não é válido")]
+        public string Email { get; set; }
+        
+        [Required(ErrorMessage = "A senha é obrigatória")]
+        [MinLength(6, ErrorMessage = "A senha deve ter pelo menos 6 caracteres")]
+        public string Password { get; set; }
+        
+        public bool RememberMe { get; set; }
     }
 }

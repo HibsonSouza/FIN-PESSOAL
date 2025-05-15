@@ -1,0 +1,86 @@
+@inherits LayoutComponentBase
+@using FinanceManager.ClientApp.Services.Interfaces
+@inject NavigationManager Navigation
+@inject IAuthenticationService AuthService
+
+<MudThemeProvider Theme="financeTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" 
+                      OnClick="@ToggleDrawer" />
+        
+        <MudText Typo="Typo.h6" Class="ml-3">Gerenciador Financeiro</MudText>
+        
+        <MudSpacer />
+        
+        <MudMenu Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" Direction="Direction.Bottom" OffsetY="true">
+            <MudMenuItem>Fatura cartão Nubank - R$ 2.354,78 (vence em 2 dias)</MudMenuItem>
+            <MudMenuItem>Fatura cartão Itaú - R$ 1.123,45 (vence em 5 dias)</MudMenuItem>
+            <MudMenuItem>Orçamento "Mercado" - 95% utilizado</MudMenuItem>
+            <MudDivider />
+            <MudMenuItem Icon="@Icons.Material.Filled.Settings" Href="/configuracoes/notificacoes">
+                Configurar notificações
+            </MudMenuItem>
+        </MudMenu>
+        
+        <MudMenu Icon="@Icons.Material.Filled.Person" Color="Color.Inherit" Direction="Direction.Bottom" OffsetY="true">
+            <MudMenuItem Href="/perfil">Meu Perfil</MudMenuItem>
+            <MudMenuItem Href="/configuracoes">Configurações</MudMenuItem>
+            <MudDivider />
+            <MudMenuItem OnClick="Logout">
+                <MudIcon Icon="@Icons.Material.Filled.Logout" Class="mr-2" /> Sair
+            </MudMenuItem>
+        </MudMenu>
+    </MudAppBar>
+    
+    <MudDrawer @bind-Open="@drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always">
+        <NavMenu />
+    </MudDrawer>
+    
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-6">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool drawerOpen = true;
+    
+    private void ToggleDrawer()
+    {
+        drawerOpen = !drawerOpen;
+    }
+    
+    private async Task Logout()
+    {
+        await AuthService.Logout();
+        Navigation.NavigateTo("/login");
+    }
+    
+    private MudTheme financeTheme = new MudTheme()
+    {
+        Palette = new PaletteLight()
+        {
+            Primary = "#1976d2",
+            Secondary = "#FF4081",
+            AppbarBackground = "#1976d2",
+            Background = "#F5F5F5",
+            Surface = "#FFFFFF",
+            DrawerBackground = "#FFFFFF",
+            DrawerText = "rgba(0,0,0,0.7)",
+            Success = "#4CAF50",
+            Error = "#F44336",
+        },
+        Typography = new Typography()
+        {
+            Default = new Default()
+            {
+                FontFamily = new[] { "Roboto", "Helvetica", "Arial", "sans-serif" }
+            }
+        }
+    };
+}

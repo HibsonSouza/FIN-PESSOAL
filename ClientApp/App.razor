@@ -1,27 +1,99 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-            <NotAuthorized>
-                <RedirectToLogin />
-            </NotAuthorized>
-            <Authorizing>
-                <div class="d-flex justify-center align-center" style="height: 100vh">
-                    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
-                </div>
-            </Authorizing>
-        </AuthorizeRouteView>
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>Página não encontrada</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center" Style="height: 70vh">
-                <MudText Typo="Typo.h2" Class="mb-4">404</MudText>
-                <MudText Typo="Typo.h5" Class="mb-4">Desculpe, não encontramos essa página.</MudText>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="/" StartIcon="@Icons.Material.Filled.Home">
-                    Voltar para a página inicial
-                </MudButton>
-            </MudContainer>
-        </LayoutView>
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @if (context.User.Identity?.IsAuthenticated != true)
+                    {
+                        <RedirectToLogin />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.h4" Align="Align.Center" Class="mt-6">
+                            Acesso Negado
+                        </MudText>
+                        <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-2">
+                            Você não tem permissão para acessar esta página.
+                        </MudText>
+                    }
+                </NotAuthorized>
+                <Authorizing>
+                    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" Class="my-4 mx-auto" />
+                </Authorizing>
+            </AuthorizeRouteView>
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+                    <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+                        Página não encontrada
+                    </MudText>
+                    <MudDivider Class="my-4" />
+                    <MudText Typo="Typo.body1" Align="Align.Center">
+                        A página que você está tentando acessar não existe ou foi movida.
+                    </MudText>
+                    <MudPaper Elevation="0" Class="d-flex justify-center mt-8">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                            Href=""
+                            StartIcon="@Icons.Material.Filled.Home">
+                            Voltar ao Início
+                        </MudButton>
+                    </MudPaper>
+                </MudContainer>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@code {
+    private bool _isDarkMode = false;
+    private MudTheme _theme = new MudTheme
+    {
+        Palette = new Palette
+        {
+            Primary = "#2463eb",
+            Secondary = "#ff8a65",
+            AppbarBackground = "#2463eb",
+            Background = "#f3f4f6",
+            DrawerBackground = "#ffffff",
+            DrawerText = "rgba(0,0,0, 0.7)",
+            Success = "#06d79c"
+        },
+        PaletteDark = new Palette
+        {
+            Primary = "#3b82f6",
+            Secondary = "#ff9800",
+            Background = "#1f2937",
+            BackgroundGrey = "#111827",
+            Surface = "#262e35",
+            DrawerBackground = "#111827",
+            DrawerText = "rgba(255,255,255, 0.50)",
+            AppbarBackground = "#111827",
+            AppbarText = "rgba(255,255,255, 0.70)",
+            TextPrimary = "rgba(255,255,255, 0.70)",
+            TextSecondary = "rgba(255,255,255, 0.50)"
+        },
+        Typography = new Typography
+        {
+            Default = new Default
+            {
+                FontFamily = new[] { "Roboto", "Helvetica", "Arial", "sans-serif" },
+                FontSize = "0.875rem",
+                FontWeight = 400,
+                LineHeight = 1.43,
+                LetterSpacing = ".01071em"
+            },
+            H1 = new H1
+            {
+                FontSize = "2.5rem",
+                FontWeight = 300,
+                LineHeight = 1.167,
+                LetterSpacing = "-.01562em"
+            }
+        }
+    };
+}

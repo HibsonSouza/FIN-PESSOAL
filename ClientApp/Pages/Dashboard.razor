@@ -1,434 +1,327 @@
-@page "/dashboard"
-@attribute [Authorize]
+@page "/"
+@using FinanceManager.ClientApp.Models
+@using FinanceManager.ClientApp.Services.Interfaces
 @inject IDashboardService DashboardService
-@inject IAccountService AccountService
-@inject ICategoryService CategoryService
-@inject IJSRuntime JSRuntime
-@implements IDisposable
 
-<PageTitle>Dashboard - Finance Manager</PageTitle>
+<PageTitle>Dashboard - Gerenciador Financeiro</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Financial Dashboard</MudText>
-
-@if (_isLoading)
-{
-    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
-}
-else
-{
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+    
     <MudGrid>
-        <!-- Financial Summary Row -->
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-4 summary-card" Style="background: linear-gradient(to right, #4caf50, #80cbc4);">
-                <MudText Typo="Typo.subtitle1" Color="Color.Surface">Total Balance</MudText>
-                <MudText Typo="Typo.h5" Color="Color.Surface">@FormatCurrency(_dashboardData.TotalBalance)</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Surface">Across @_dashboardData.ActiveAccountsCount accounts</MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-4 summary-card" Style="background: linear-gradient(to right, #2196f3, #90caf9);">
-                <MudText Typo="Typo.subtitle1" Color="Color.Surface">Monthly Income</MudText>
-                <MudText Typo="Typo.h5" Color="Color.Surface">@FormatCurrency(_dashboardData.MonthlyIncome)</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Surface">This month</MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-4 summary-card" Style="background: linear-gradient(to right, #ff9800, #ffcc80);">
-                <MudText Typo="Typo.subtitle1" Color="Color.Surface">Monthly Expenses</MudText>
-                <MudText Typo="Typo.h5" Color="Color.Surface">@FormatCurrency(_dashboardData.MonthlyExpenses)</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Surface">This month</MudText>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-4 summary-card" Style="background: linear-gradient(to right, #9c27b0, #ce93d8);">
-                <MudText Typo="Typo.subtitle1" Color="Color.Surface">Monthly Savings</MudText>
-                <MudText Typo="Typo.h5" Color="Color.Surface">@FormatCurrency(_dashboardData.MonthlySavings)</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Surface">
-                    @if (_dashboardData.MonthlySavingsPercentage > 0)
-                    {
-                        <span>@_dashboardData.MonthlySavingsPercentage.ToString("0.0")% of income</span>
-                    }
-                    else
-                    {
-                        <span>Spending exceeds income</span>
-                    }
+        <MudItem xs="12" md="6" lg="3">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 150px;">
+                <MudText Typo="Typo.subtitle1" Color="Color.Primary">Saldo Total</MudText>
+                @if (isLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60%" Height="40px" Class="mt-2" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h4" Color="@(dashboardData?.TotalBalance >= 0 ? Color.Success : Color.Error)" Class="mt-2">
+                        @FormatCurrency(dashboardData?.TotalBalance ?? 0)
+                    </MudText>
+                }
+                <MudText Typo="Typo.caption" Class="mt-2">
+                    Saldo de todas as contas
                 </MudText>
             </MudPaper>
         </MudItem>
-
-        <!-- Charts Row -->
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6">Income vs Expenses</MudText>
-                <div class="chart-container">
-                    <canvas id="incomeExpensesChart"></canvas>
-                </div>
-            </MudPaper>
-        </MudItem>
-
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6">Expense Breakdown</MudText>
-                <div class="chart-container">
-                    <canvas id="expensesChart"></canvas>
-                </div>
-            </MudPaper>
-        </MudItem>
-
-        <!-- Recent Transactions -->
-        <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4">Recent Transactions</MudText>
-                @if (_dashboardData.RecentTransactions.Count == 0)
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 150px;">
+                <MudText Typo="Typo.subtitle1" Color="Color.Primary">Receitas (Mês Atual)</MudText>
+                @if (isLoading)
                 {
-                    <MudText Typo="Typo.body2" Class="my-4" Align="Align.Center">No recent transactions found.</MudText>
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60%" Height="40px" Class="mt-2" />
                 }
                 else
                 {
-                    <MudList Clickable="true" Class="pa-0">
-                        @foreach (var transaction in _dashboardData.RecentTransactions)
+                    <MudText Typo="Typo.h4" Color="Color.Success" Class="mt-2">
+                        @FormatCurrency(dashboardData?.MonthlyIncome ?? 0)
+                    </MudText>
+                }
+                <MudText Typo="Typo.caption" Class="mt-2">
+                    Total de receitas no mês corrente
+                </MudText>
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 150px;">
+                <MudText Typo="Typo.subtitle1" Color="Color.Primary">Despesas (Mês Atual)</MudText>
+                @if (isLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60%" Height="40px" Class="mt-2" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h4" Color="Color.Error" Class="mt-2">
+                        @FormatCurrency(dashboardData?.MonthlyExpenses ?? 0)
+                    </MudText>
+                }
+                <MudText Typo="Typo.caption" Class="mt-2">
+                    Total de despesas no mês corrente
+                </MudText>
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 150px;">
+                <MudText Typo="Typo.subtitle1" Color="Color.Primary">Saldo Mensal</MudText>
+                @if (isLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="60%" Height="40px" Class="mt-2" />
+                }
+                else
+                {
+                    <MudText Typo="Typo.h4" Color="@(GetMonthlySaldo() >= 0 ? Color.Success : Color.Error)" Class="mt-2">
+                        @FormatCurrency(GetMonthlySaldo())
+                    </MudText>
+                }
+                <MudText Typo="Typo.caption" Class="mt-2">
+                    Diferença entre receitas e despesas
+                </MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+    
+    <MudGrid Class="mt-4">
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-4">Transações Recentes</MudText>
+                
+                @if (isLoading)
+                {
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="50px" Class="mb-2" />
+                    }
+                }
+                else if (dashboardData?.RecentTransactions?.Count > 0)
+                {
+                    <MudList Clickable="true">
+                        @foreach (var transaction in dashboardData.RecentTransactions)
                         {
-                            <MudListItem Class="@GetTransactionItemClass(transaction)">
-                                <div class="d-flex flex-row" style="width: 100%;">
-                                    <MudAvatar Color="@GetTransactionColorByType(transaction.Type)" Class="mr-3">
-                                        <MudIcon Icon="@GetTransactionIconByType(transaction.Type)" />
-                                    </MudAvatar>
-                                    <div class="d-flex flex-column flex-grow-1">
+                            <MudListItem Icon="@GetTransactionIcon(transaction.Type)">
+                                <div class="d-flex justify-space-between align-center width-100">
+                                    <div>
                                         <MudText Typo="Typo.body1">@transaction.Description</MudText>
-                                        <MudText Typo="Typo.caption">@transaction.Date.ToString("MMM dd, yyyy") - @transaction.CategoryName</MudText>
+                                        <MudText Typo="Typo.caption">@transaction.Date.ToString("dd/MM/yyyy")</MudText>
                                     </div>
-                                    <MudText Typo="Typo.body1" Class="@GetAmountColorClass(transaction.Type)">
-                                        @(transaction.Type == TransactionType.INCOME ? "+" : "-")@FormatCurrency(Math.Abs(transaction.Amount))
+                                    <MudText Typo="Typo.body1" Color="@(transaction.Type == TransactionType.Income ? Color.Success : Color.Error)">
+                                        @FormatCurrency(transaction.Amount)
                                     </MudText>
                                 </div>
                             </MudListItem>
+                            <MudDivider />
                         }
                     </MudList>
-                    <MudDivider Class="my-3" />
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/transactions" EndIcon="@Icons.Material.Filled.ChevronRight" FullWidth="true">
-                        View All Transactions
-                    </MudButton>
+                    
+                    <div class="d-flex justify-end mt-3">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/transacoes">
+                            Ver Todas
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Class="ml-1" />
+                        </MudButton>
+                    </div>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-3">
+                        Nenhuma transação registrada nos últimos 30 dias.
+                    </MudAlert>
                 }
             </MudPaper>
         </MudItem>
-
-        <!-- Accounts Summary -->
+        
         <MudItem xs="12" md="6">
-            <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4">Accounts Summary</MudText>
-                @if (_dashboardData.AccountsSummary.Count == 0)
+            <MudPaper Elevation="2" Class="pa-4 d-flex flex-column" Style="height: 400px;">
+                <MudText Typo="Typo.h6" Class="mb-4">Distribuição de Despesas</MudText>
+                
+                @if (isLoading)
                 {
-                    <MudText Typo="Typo.body2" Class="my-4" Align="Align.Center">No accounts found. Add your first account to get started.</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/accounts/add" FullWidth="true">Add Account</MudButton>
+                    <div class="d-flex justify-center align-center flex-grow-1">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                    </div>
+                }
+                else if (dashboardData?.ExpensesByCategory?.Count > 0)
+                {
+                    <MudChart ChartType="ChartType.Pie" 
+                             InputData="@GetCategoryPercentages()"
+                             InputLabels="@GetCategoryLabels()"
+                             Width="100%" Height="350px" />
                 }
                 else
                 {
-                    <MudList Clickable="true" Class="pa-0">
-                        @foreach (var account in _dashboardData.AccountsSummary)
-                        {
-                            <MudListItem Href="@($"/accounts/{account.Id}")">
-                                <div class="d-flex flex-row" style="width: 100%;">
-                                    <MudAvatar Color="Color.Primary" Style="@($"background-color: {account.Color}")">
-                                        <MudIcon Icon="@account.IconName" />
-                                    </MudAvatar>
-                                    <div class="d-flex flex-column flex-grow-1 ml-3">
-                                        <MudText Typo="Typo.body1">@account.Name</MudText>
-                                        <MudText Typo="Typo.caption">@account.Type</MudText>
-                                    </div>
-                                    <MudText Typo="Typo.body1">@FormatCurrency(account.Balance)</MudText>
-                                </div>
-                            </MudListItem>
-                        }
-                    </MudList>
-                    <MudDivider Class="my-3" />
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/accounts" EndIcon="@Icons.Material.Filled.ChevronRight" FullWidth="true">
-                        View All Accounts
-                    </MudButton>
-                }
-            </MudPaper>
-        </MudItem>
-
-        <!-- Budget Progress -->
-        <MudItem xs="12">
-            <MudPaper Class="pa-4" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-4">Budget Overview</MudText>
-                @if (_dashboardData.BudgetProgress.Count == 0)
-                {
-                    <MudText Typo="Typo.body2" Class="my-4" Align="Align.Center">No budgets found. Create a budget to track your spending.</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/budgets" FullWidth="true">Create Budget</MudButton>
-                }
-                else
-                {
-                    <MudGrid>
-                        @foreach (var budget in _dashboardData.BudgetProgress)
-                        {
-                            <MudItem xs="12" sm="6" md="4">
-                                <MudPaper Class="pa-3" Elevation="1">
-                                    <MudText Typo="Typo.subtitle1">@budget.CategoryName</MudText>
-                                    <MudProgressLinear 
-                                        Value="@GetBudgetPercentage(budget)" 
-                                        Color="@GetBudgetProgressColor(budget)" 
-                                        Class="my-2" />
-                                    <div class="d-flex justify-space-between">
-                                        <MudText Typo="Typo.caption">@FormatCurrency(budget.CurrentSpent) of @FormatCurrency(budget.Amount)</MudText>
-                                        <MudText Typo="Typo.caption">@GetBudgetPercentage(budget)%</MudText>
-                                    </div>
-                                </MudPaper>
-                            </MudItem>
-                        }
-                    </MudGrid>
-                    <MudDivider Class="my-3" />
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/budgets" EndIcon="@Icons.Material.Filled.ChevronRight" FullWidth="true">
-                        View All Budgets
-                    </MudButton>
+                    <MudAlert Severity="Severity.Info" Class="mt-3 flex-grow-1 d-flex align-center justify-center">
+                        Nenhuma despesa categorizada registrada no período.
+                    </MudAlert>
                 }
             </MudPaper>
         </MudItem>
     </MudGrid>
-}
+    
+    <MudGrid Class="mt-4">
+        <MudItem xs="12">
+            <MudPaper Elevation="2" Class="pa-4">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <MudText Typo="Typo.h6">Fluxo de Caixa</MudText>
+                    
+                    <MudSelect T="string" Value="selectedPeriod" ValueChanged="OnPeriodChanged" Label="Período" 
+                              Variant="Variant.Outlined" Dense="true" Style="width: 150px;">
+                        <MudSelectItem Value="@("30d")">Últimos 30 dias</MudSelectItem>
+                        <MudSelectItem Value="@("90d")">Últimos 3 meses</MudSelectItem>
+                        <MudSelectItem Value="@("year")">Este ano</MudSelectItem>
+                    </MudSelect>
+                </div>
+                
+                @if (isLoading)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="250px" />
+                }
+                else if (dashboardData?.CashFlow?.Count > 0)
+                {
+                    <MudChart ChartType="ChartType.Line" 
+                             ChartSeries="@GetCashFlowSeries()"
+                             XAxisLabels="@GetCashFlowLabels()"
+                             Width="100%" Height="300px" />
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-3">
+                        Não há dados suficientes para exibir o fluxo de caixa no período selecionado.
+                    </MudAlert>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
-    private bool _isLoading = true;
-    private DashboardViewModel _dashboardData = new DashboardViewModel();
-    private string _incomeExpensesChartId = "incomeExpensesChart";
-    private string _expensesChartId = "expensesChart";
-
+    private DashboardViewModel dashboardData;
+    private bool isLoading = true;
+    private string selectedPeriod = "30d";
+    
     protected override async Task OnInitializedAsync()
     {
+        await LoadDashboardDataAsync();
+    }
+    
+    private async Task LoadDashboardDataAsync()
+    {
+        isLoading = true;
+        
         try
         {
-            _isLoading = true;
-            _dashboardData = await DashboardService.GetDashboardDataAsync();
+            var dateRange = GetDateRangeFromPeriod(selectedPeriod);
+            dashboardData = await DashboardService.GetDashboardDataAsync(dateRange);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading dashboard: {ex.Message}");
-            // In a real app, log this error and show a notification
+            Console.WriteLine($"Erro ao carregar dados do dashboard: {ex.Message}");
+            // Implementar tratamento de erro adequado aqui
         }
         finally
         {
-            _isLoading = false;
+            isLoading = false;
         }
     }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    
+    private async Task OnPeriodChanged(string period)
     {
-        if (firstRender && !_isLoading)
+        selectedPeriod = period;
+        await LoadDashboardDataAsync();
+    }
+    
+    private DateRange GetDateRangeFromPeriod(string period)
+    {
+        var endDate = DateTime.Now;
+        DateTime startDate;
+        
+        switch (period)
         {
-            await RenderChartsAsync();
+            case "90d":
+                startDate = endDate.AddDays(-90);
+                break;
+            case "year":
+                startDate = new DateTime(endDate.Year, 1, 1);
+                break;
+            case "30d":
+            default:
+                startDate = endDate.AddDays(-30);
+                break;
         }
+        
+        return new DateRange { StartDate = startDate, EndDate = endDate };
     }
-
-    private async Task RenderChartsAsync()
+    
+    private decimal GetMonthlySaldo()
     {
-        await RenderIncomeExpensesChartAsync();
-        await RenderExpensesChartAsync();
-    }
-
-    private async Task RenderIncomeExpensesChartAsync()
-    {
-        var labels = _dashboardData.IncomeVsExpensesData.Labels;
-        var incomeData = _dashboardData.IncomeVsExpensesData.IncomeData;
-        var expensesData = _dashboardData.IncomeVsExpensesData.ExpensesData.Select(e => -e).ToArray();
-
-        var config = new
-        {
-            type = "bar",
-            data = new
-            {
-                labels = labels,
-                datasets = new object[]
-                {
-                    new
-                    {
-                        label = "Income",
-                        data = incomeData,
-                        backgroundColor = "#4caf50",
-                        borderColor = "#388e3c",
-                        borderWidth = 1
-                    },
-                    new
-                    {
-                        label = "Expenses",
-                        data = expensesData,
-                        backgroundColor = "#f44336",
-                        borderColor = "#d32f2f",
-                        borderWidth = 1
-                    }
-                }
-            },
-            options = new
-            {
-                responsive = true,
-                maintainAspectRatio = false,
-                scales = new
-                {
-                    x = new
-                    {
-                        stacked = true,
-                        grid = new
-                        {
-                            display = false
-                        }
-                    },
-                    y = new
-                    {
-                        stacked = true,
-                        ticks = new
-                        {
-                            callback = "function(value) { return Math.abs(value).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }); }"
-                        }
-                    }
-                },
-                plugins = new
-                {
-                    tooltip = new
-                    {
-                        callbacks = new
-                        {
-                            label = "function(context) { return context.dataset.label + ': ' + Math.abs(context.raw).toLocaleString('en-US', { style: 'currency', currency: 'USD' }); }"
-                        }
-                    }
-                }
-            }
-        };
-
-        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _incomeExpensesChartId, config);
-    }
-
-    private async Task RenderExpensesChartAsync()
-    {
-        var labels = _dashboardData.ExpensesByCategoryData.Categories;
-        var data = _dashboardData.ExpensesByCategoryData.Amounts;
-        var backgroundColors = GenerateColors(labels.Length);
-
-        var config = new
-        {
-            type = "doughnut",
-            data = new
-            {
-                labels = labels,
-                datasets = new object[]
-                {
-                    new
-                    {
-                        data = data,
-                        backgroundColor = backgroundColors,
-                        borderColor = "white",
-                        borderWidth = 1
-                    }
-                }
-            },
-            options = new
-            {
-                responsive = true,
-                maintainAspectRatio = false,
-                plugins = new
-                {
-                    legend = new
-                    {
-                        position = "right",
-                        labels = new
-                        {
-                            boxWidth = 15,
-                            padding = 15
-                        }
-                    },
-                    tooltip = new
-                    {
-                        callbacks = new
-                        {
-                            label = "function(context) { return context.label + ': ' + context.raw.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) + ' (' + ((context.raw / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1) + '%)'; }"
-                        }
-                    }
-                }
-            }
-        };
-
-        await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _expensesChartId, config);
-    }
-
-    private string[] GenerateColors(int count)
-    {
-        string[] colorPalette = {
-            "#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5",
-            "#2196F3", "#03A9F4", "#00BCD4", "#009688", "#4CAF50",
-            "#8BC34A", "#CDDC39", "#FFEB3B", "#FFC107", "#FF9800",
-            "#FF5722", "#795548", "#9E9E9E", "#607D8B"
-        };
-
-        var colors = new string[count];
-        for (int i = 0; i < count; i++)
-        {
-            colors[i] = colorPalette[i % colorPalette.Length];
-        }
-        return colors;
-    }
-
-    private string FormatCurrency(decimal amount)
-    {
-        return amount.ToString("C", new System.Globalization.CultureInfo("en-US"));
-    }
-
-    private string GetTransactionItemClass(TransactionViewModel transaction)
-    {
-        return $"transaction-list-item {transaction.Type.ToString().ToLower()}";
-    }
-
-    private string GetTransactionIconByType(TransactionType type)
-    {
-        return type switch
-        {
-            TransactionType.INCOME => Icons.Material.Filled.ArrowUpward,
-            TransactionType.EXPENSE => Icons.Material.Filled.ArrowDownward,
-            TransactionType.TRANSFER => Icons.Material.Filled.SwapHoriz,
-            _ => Icons.Material.Filled.Help
-        };
-    }
-
-    private Color GetTransactionColorByType(TransactionType type)
-    {
-        return type switch
-        {
-            TransactionType.INCOME => Color.Success,
-            TransactionType.EXPENSE => Color.Error,
-            TransactionType.TRANSFER => Color.Info,
-            _ => Color.Default
-        };
-    }
-
-    private string GetAmountColorClass(TransactionType type)
-    {
-        return type == TransactionType.INCOME ? "currency-positive" : "currency-negative";
-    }
-
-    private double GetBudgetPercentage(BudgetProgressViewModel budget)
-    {
-        if (budget.Amount == 0)
+        if (dashboardData == null)
             return 0;
             
-        return Math.Min(100, Math.Round((double)(budget.CurrentSpent / budget.Amount * 100), 1));
+        return dashboardData.MonthlyIncome - dashboardData.MonthlyExpenses;
     }
-
-    private Color GetBudgetProgressColor(BudgetProgressViewModel budget)
+    
+    private string FormatCurrency(decimal value)
     {
-        var percentage = GetBudgetPercentage(budget);
-        if (percentage < 70)
-            return Color.Success;
-        if (percentage < 90)
-            return Color.Warning;
-        return Color.Error;
+        return value.ToString("C", new System.Globalization.CultureInfo("pt-BR"));
     }
-
-    public void Dispose()
+    
+    private string GetTransactionIcon(TransactionType type)
     {
-        if (!_isLoading)
+        return type == TransactionType.Income ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward;
+    }
+    
+    private double[] GetCategoryPercentages()
+    {
+        if (dashboardData?.ExpensesByCategory == null || dashboardData.ExpensesByCategory.Count == 0)
+            return new double[] { 100 };
+            
+        var total = dashboardData.ExpensesByCategory.Sum(c => c.Amount);
+        
+        return dashboardData.ExpensesByCategory
+            .Select(c => Math.Round((double)((c.Amount / total) * 100), 1))
+            .ToArray();
+    }
+    
+    private string[] GetCategoryLabels()
+    {
+        if (dashboardData?.ExpensesByCategory == null || dashboardData.ExpensesByCategory.Count == 0)
+            return new string[] { "Sem dados" };
+            
+        return dashboardData.ExpensesByCategory
+            .Select(c => c.Category)
+            .ToArray();
+    }
+    
+    private List<ChartSeries> GetCashFlowSeries()
+    {
+        if (dashboardData?.CashFlow == null || dashboardData.CashFlow.Count == 0)
+            return new List<ChartSeries>();
+            
+        var incomeSeries = new ChartSeries()
         {
-            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _incomeExpensesChartId);
-            _ = JSRuntime.InvokeVoidAsync("chartJsInterop.destroyChart", _expensesChartId);
-        }
+            Name = "Receitas",
+            Data = dashboardData.CashFlow.Select(cf => (double)cf.Income).ToArray()
+        };
+        
+        var expenseSeries = new ChartSeries()
+        {
+            Name = "Despesas",
+            Data = dashboardData.CashFlow.Select(cf => (double)cf.Expenses).ToArray()
+        };
+        
+        return new List<ChartSeries> { incomeSeries, expenseSeries };
+    }
+    
+    private string[] GetCashFlowLabels()
+    {
+        if (dashboardData?.CashFlow == null || dashboardData.CashFlow.Count == 0)
+            return new string[] { };
+            
+        return dashboardData.CashFlow
+            .Select(cf => cf.Period)
+            .ToArray();
     }
 }

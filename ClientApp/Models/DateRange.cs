@@ -4,69 +4,92 @@ namespace FinanceManager.ClientApp.Models
 {
     public class DateRange
     {
-        public DateTime Start { get; set; }
-        public DateTime End { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
 
         public DateRange()
         {
-            // Por padrão, define o intervalo para o mês atual
-            Start = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-            End = Start.AddMonths(1).AddDays(-1);
+            // Padrão: Mês atual
+            var today = DateTime.Today;
+            StartDate = new DateTime(today.Year, today.Month, 1);
+            EndDate = StartDate.AddMonths(1).AddDays(-1);
         }
 
-        public DateRange(DateTime start, DateTime end)
+        public DateRange(DateTime startDate, DateTime endDate)
         {
-            Start = start;
-            End = end;
+            StartDate = startDate;
+            EndDate = endDate;
         }
 
-        // Métodos auxiliares para criar períodos comuns
+        // Filtros pré-definidos
         public static DateRange CurrentMonth()
         {
-            var now = DateTime.Now;
+            var today = DateTime.Today;
             return new DateRange(
-                new DateTime(now.Year, now.Month, 1),
-                new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month))
+                new DateTime(today.Year, today.Month, 1),
+                new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month))
             );
         }
 
         public static DateRange PreviousMonth()
         {
-            var now = DateTime.Now.AddMonths(-1);
+            var today = DateTime.Today;
+            var firstDayOfMonth = new DateTime(today.Year, today.Month, 1);
+            var firstDayOfPreviousMonth = firstDayOfMonth.AddMonths(-1);
             return new DateRange(
-                new DateTime(now.Year, now.Month, 1),
-                new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month))
+                firstDayOfPreviousMonth,
+                firstDayOfPreviousMonth.AddDays(DateTime.DaysInMonth(firstDayOfPreviousMonth.Year, firstDayOfPreviousMonth.Month) - 1)
             );
         }
 
         public static DateRange CurrentYear()
         {
-            var now = DateTime.Now;
+            var today = DateTime.Today;
             return new DateRange(
-                new DateTime(now.Year, 1, 1),
-                new DateTime(now.Year, 12, 31)
+                new DateTime(today.Year, 1, 1),
+                new DateTime(today.Year, 12, 31)
             );
         }
 
         public static DateRange Last30Days()
         {
+            var today = DateTime.Today;
             return new DateRange(
-                DateTime.Now.AddDays(-30),
-                DateTime.Now
+                today.AddDays(-30),
+                today
             );
         }
 
         public static DateRange Last90Days()
         {
+            var today = DateTime.Today;
             return new DateRange(
-                DateTime.Now.AddDays(-90),
-                DateTime.Now
+                today.AddDays(-90),
+                today
             );
         }
 
-        public static DateRange Custom(DateTime start, DateTime end)
+        public static DateRange Last6Months()
         {
-            return new DateRange(start, end);
+            var today = DateTime.Today;
+            return new DateRange(
+                today.AddMonths(-6),
+                today
+            );
+        }
+
+        public static DateRange Last12Months()
+        {
+            var today = DateTime.Today;
+            return new DateRange(
+                today.AddMonths(-12),
+                today
+            );
+        }
+
+        public override string ToString()
+        {
+            return $"{StartDate:dd/MM/yyyy} - {EndDate:dd/MM/yyyy}";
         }
     }
 }
