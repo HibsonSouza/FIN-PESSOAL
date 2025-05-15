@@ -1,0 +1,192 @@
+@page "/"
+@using FinanceManager.ClientApp.Models
+@using System.Globalization
+@attribute [Authorize]
+@inject IAuthenticationService AuthService
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Dashboard - Gerenciador Financeiro</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4" Elevation="3">
+            <MudText Typo="Typo.subtitle1">Saldo Total</MudText>
+            <MudText Typo="Typo.h5" Color="@(_saldoTotal >= 0 ? Color.Success : Color.Error)">
+                @_saldoTotal.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4" Elevation="3">
+            <MudText Typo="Typo.subtitle1">Receitas (Mês)</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Success">
+                @_receitasMes.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4" Elevation="3">
+            <MudText Typo="Typo.subtitle1">Despesas (Mês)</MudText>
+            <MudText Typo="Typo.h5" Color="Color.Error">
+                @_despesasMes.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4" Elevation="3">
+            <MudText Typo="Typo.subtitle1">Saldo (Mês)</MudText>
+            <MudText Typo="Typo.h5" Color="@((_receitasMes - _despesasMes) >= 0 ? Color.Success : Color.Error)">
+                @((_receitasMes - _despesasMes).ToString("C", CultureInfo.GetCultureInfo("pt-BR")))
+            </MudText>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<MudGrid Class="mt-4">
+    <MudItem xs="12" md="6">
+        <MudCard Elevation="3">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Transações Recentes</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" 
+                                   @onclick="@(() => NavigationManager.NavigateTo("/transacoes/nova"))" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_transacoesRecentes == null)
+                {
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                }
+                else if (!_transacoesRecentes.Any())
+                {
+                    <MudAlert Severity="Severity.Info">
+                        Você ainda não tem transações registradas.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudList Clickable="true">
+                        @foreach (var transacao in _transacoesRecentes)
+                        {
+                            <MudListItem @onclick="@(() => NavigationManager.NavigateTo($"/transacoes/{transacao.Id}"))">
+                                <div class="d-flex flex-row align-center">
+                                    <MudAvatar Color="@(transacao.Type == TransactionType.Income ? Color.Success : 
+                                                        transacao.Type == TransactionType.Expense ? Color.Error : Color.Info)"
+                                               Style="margin-right: 16px;">
+                                        @(transacao.Type == TransactionType.Income ? "+" : 
+                                          transacao.Type == TransactionType.Expense ? "-" : "T")
+                                    </MudAvatar>
+                                    <div class="flex-grow-1">
+                                        <MudText Typo="Typo.body1">@transacao.Description</MudText>
+                                        <MudText Typo="Typo.caption">@transacao.Date.ToString("dd/MM/yyyy")</MudText>
+                                    </div>
+                                    <MudText Typo="Typo.body1" 
+                                             Color="@(transacao.Type == TransactionType.Income ? Color.Success : 
+                                                      transacao.Type == TransactionType.Expense ? Color.Error : Color.Info)">
+                                        @(transacao.Type == TransactionType.Income ? "+" : 
+                                          transacao.Type == TransactionType.Expense ? "-" : "")
+                                        @transacao.Amount.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                                    </MudText>
+                                </div>
+                            </MudListItem>
+                            <MudDivider />
+                        }
+                    </MudList>
+                    <MudButton Class="mt-2" Variant="Variant.Text" 
+                               @onclick="@(() => NavigationManager.NavigateTo("/transacoes"))">
+                        Ver todas as transações
+                    </MudButton>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudCard Elevation="3">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Distribuição de Despesas</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_categoriasChart == null || !_categoriasChart.Any())
+                {
+                    <MudAlert Severity="Severity.Info">
+                        Não há dados suficientes para exibir o gráfico de categorias.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudChart Type="ChartType.Pie" 
+                              InputData="@(_categoriasChart.Select(c => (double)c.Value).ToArray())"
+                              InputLabels="@(_categoriasChart.Select(c => c.Label).ToArray())"
+                              Width="100%"
+                              Height="300px" />
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private decimal _saldoTotal = 0;
+    private decimal _receitasMes = 0;
+    private decimal _despesasMes = 0;
+    private List<TransactionViewModel> _transacoesRecentes = new();
+    private List<ChartData> _categoriasChart = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDados();
+    }
+    
+    private async Task CarregarDados()
+    {
+        try
+        {
+            // Obter os dados resumidos
+            var dateRange = DateTimeRange.ThisMonth();
+            
+            // Obter resumo de contas
+            var contas = await AccountService.GetAccounts();
+            _saldoTotal = contas.Sum(c => c.Balance);
+            
+            // Obter transações do mês atual
+            var transacoesMes = await TransactionService.GetTransactionsByDateRange(dateRange);
+            _receitasMes = transacoesMes.Where(t => t.Type == TransactionType.Income).Sum(t => t.Amount);
+            _despesasMes = transacoesMes.Where(t => t.Type == TransactionType.Expense).Sum(t => t.Amount);
+            
+            // Obter transações recentes
+            _transacoesRecentes = await TransactionService.GetRecentTransactions(5);
+            
+            // Obter dados para o gráfico de categorias
+            var categorias = await CategoryService.GetCategorySummary(dateRange);
+            var cores = ChartData.GetDefaultColors();
+            
+            _categoriasChart = categorias
+                .Where(c => c.TotalAmount > 0)
+                .Select((c, i) => new ChartData
+                {
+                    Label = c.CategoryName,
+                    Value = c.TotalAmount,
+                    Color = i < cores.Count ? cores[i] : "#9e9e9e"
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar dados: {ex.Message}", Severity.Error);
+        }
+    }
+}

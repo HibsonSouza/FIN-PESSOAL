@@ -2,8 +2,8 @@ namespace FinanceManager.ClientApp.Models
 {
     public enum TransactionType
     {
-        Income = 0,
-        Expense = 1,
-        Transfer = 2
+        Income = 1,
+        Expense = 2,
+        Transfer = 3
     }
 }

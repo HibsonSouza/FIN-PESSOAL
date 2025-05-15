@@ -1,182 +1,212 @@
 @page "/"
+@inject IDashboardService DashboardService
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
 
 <PageTitle>Dashboard - Gerenciador Financeiro</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.False">
-    <MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Dashboard Financeiro</MudText>
 
-    <MudGrid>
-        <!-- Saldo total -->
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">
-                <MudText Typo="Typo.subtitle1" Color="Color.Primary">Saldo Total</MudText>
-                <MudText Typo="Typo.h5">R$ 12.345,67</MudText>
-                <MudText Typo="Typo.caption" Color="Color.Success">+2,5% este mês</MudText>
-            </MudPaper>
-        </MudItem>
+    @if (_isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-4" />
+    }
+    else
+    {
+        <MudGrid>
+            <!-- Saldo Total -->
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="2" Class="pa-4 finance-card">
+                    <MudText Typo="Typo.subtitle1">Saldo Total</MudText>
+                    <MudText Typo="Typo.h5" Color="@(_summary.TotalBalance >= 0 ? Color.Success : Color.Error)">
+                        @_summary.TotalBalance.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                    </MudText>
+                    <MudText Typo="Typo.caption">Atualizado em @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</MudText>
+                </MudPaper>
+            </MudItem>
 
-        <!-- Receitas -->
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">
-                <MudText Typo="Typo.subtitle1" Color="Color.Success">Receitas (este mês)</MudText>
-                <MudText Typo="Typo.h5">R$ 4.500,00</MudText>
-                <MudText Typo="Typo.caption">+15,2% em relação ao mês anterior</MudText>
-            </MudPaper>
-        </MudItem>
+            <!-- Receitas do Mês -->
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="2" Class="pa-4 finance-card">
+                    <MudText Typo="Typo.subtitle1">Receitas do Mês</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Success">
+                        @_summary.MonthlyIncome.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                    </MudText>
+                    <MudText Typo="Typo.caption">
+                        @if (_summary.IncomeChange >= 0)
+                        {
+                            <span style="color: green">+@_summary.IncomeChange.ToString("F1")%</span>
+                        }
+                        else
+                        {
+                            <span style="color: red">@_summary.IncomeChange.ToString("F1")%</span>
+                        }
+                        <span> em relação ao mês anterior</span>
+                    </MudText>
+                </MudPaper>
+            </MudItem>
 
-        <!-- Despesas -->
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">
-                <MudText Typo="Typo.subtitle1" Color="Color.Error">Despesas (este mês)</MudText>
-                <MudText Typo="Typo.h5">R$ 2.750,00</MudText>
-                <MudText Typo="Typo.caption">-5,1% em relação ao mês anterior</MudText>
-            </MudPaper>
-        </MudItem>
+            <!-- Despesas do Mês -->
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="2" Class="pa-4 finance-card">
+                    <MudText Typo="Typo.subtitle1">Despesas do Mês</MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Error">
+                        @_summary.MonthlyExpenses.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                    </MudText>
+                    <MudText Typo="Typo.caption">
+                        @if (_summary.ExpenseChange <= 0)
+                        {
+                            <span style="color: green">@_summary.ExpenseChange.ToString("F1")%</span>
+                        }
+                        else
+                        {
+                            <span style="color: red">+@_summary.ExpenseChange.ToString("F1")%</span>
+                        }
+                        <span> em relação ao mês anterior</span>
+                    </MudText>
+                </MudPaper>
+            </MudItem>
 
-        <!-- Economia -->
-        <MudItem xs="12" sm="6" md="3">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">
-                <MudText Typo="Typo.subtitle1" Color="Color.Info">Economia (este mês)</MudText>
-                <MudText Typo="Typo.h5">R$ 1.750,00</MudText>
-                <MudText Typo="Typo.caption">38,9% da receita</MudText>
-            </MudPaper>
-        </MudItem>
+            <!-- Previsão de Saldo -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="pa-4 my-4 finance-card">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Previsão de Saldo</MudText>
+                    <MudChart ChartType="ChartType.Line" ChartSeries="@_forecastSeries" XAxisLabels="@_forecastLabels" Width="100%" Height="300px"></MudChart>
+                </MudPaper>
+            </MudItem>
 
-        <!-- Gráfico de receitas e despesas -->
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-4">Receitas x Despesas (últimos 6 meses)</MudText>
-                <div class="chart-placeholder">
-                    <!-- Aqui entrará um componente de gráfico de barras -->
-                    <div class="mock-chart"></div>
-                </div>
-            </MudPaper>
-        </MudItem>
+            <!-- Gastos por Categoria -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="pa-4 my-4 finance-card">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Gastos por Categoria</MudText>
+                    <MudChart ChartType="ChartType.Pie" ChartSeries="@_categorySeries" Width="100%" Height="300px" InputData="@_categoryData" InputLabels="@_categoryLabels"></MudChart>
+                </MudPaper>
+            </MudItem>
 
-        <!-- Gráfico de distribuição de gastos por categoria -->
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-4">Gastos por Categoria (este mês)</MudText>
-                <div class="chart-placeholder">
-                    <!-- Aqui entrará um componente de gráfico de pizza -->
-                    <div class="mock-chart"></div>
-                </div>
-            </MudPaper>
-        </MudItem>
+            <!-- Ações Rápidas -->
+            <MudItem xs="12">
+                <MudPaper Elevation="2" Class="pa-4 my-4">
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">Ações Rápidas</MudText>
+                    <MudGrid>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="@(() => NavigationManager.NavigateTo("/transacoes/nova"))">
+                                <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" /> Nova Transação
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" FullWidth="true" OnClick="@(() => NavigationManager.NavigateTo("/orcamentos/novo"))">
+                                <MudIcon Icon="@Icons.Material.Filled.AddChart" Class="mr-2" /> Novo Orçamento
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" FullWidth="true" OnClick="@(() => NavigationManager.NavigateTo("/relatorios/mensal"))">
+                                <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="mr-2" /> Ver Relatórios
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" OnClick="@(() => NavigationManager.NavigateTo("/contas"))">
+                                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="mr-2" /> Gerenciar Contas
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
 
-        <!-- Últimas transações -->
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-4">Últimas Transações</MudText>
-                <MudTable Items="@_lastTransactions" Hover="true" Elevation="0">
-                    <HeaderContent>
-                        <MudTh>Data</MudTh>
-                        <MudTh>Descrição</MudTh>
-                        <MudTh>Categoria</MudTh>
-                        <MudTh Style="text-align: right">Valor</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>@context.Date.ToString("dd/MM/yyyy")</MudTd>
-                        <MudTd>@context.Description</MudTd>
-                        <MudTd>@context.Category</MudTd>
-                        <MudTd Style="text-align: right">
-                            <MudText Color="@(context.Type == "Despesa" ? Color.Error : Color.Success)">
-                                @(context.Type == "Despesa" ? "-" : "+")R$ @context.Amount.ToString("N2")
-                            </MudText>
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-                <div class="d-flex justify-end mt-4">
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/transactions">Ver todas</MudButton>
-                </div>
-            </MudPaper>
-        </MudItem>
-
-        <!-- Próximos vencimentos -->
-        <MudItem xs="12" md="6">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-4">Próximos Vencimentos</MudText>
-                <MudTable Items="@_upcomingPayments" Hover="true" Elevation="0">
-                    <HeaderContent>
-                        <MudTh>Vencimento</MudTh>
-                        <MudTh>Descrição</MudTh>
-                        <MudTh>Tipo</MudTh>
-                        <MudTh Style="text-align: right">Valor</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd>
-                            <MudText Color="@(IsOverdue(context.DueDate) ? Color.Error : Color.Default)">
-                                @context.DueDate.ToString("dd/MM/yyyy")
-                            </MudText>
-                        </MudTd>
-                        <MudTd>@context.Description</MudTd>
-                        <MudTd>@context.Type</MudTd>
-                        <MudTd Style="text-align: right">R$ @context.Amount.ToString("N2")</MudTd>
-                    </RowTemplate>
-                </MudTable>
-                <div class="d-flex justify-end mt-4">
-                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/budgets">Ver todos</MudButton>
-                </div>
-            </MudPaper>
-        </MudItem>
-    </MudGrid>
+            <!-- Transações Recentes -->
+            <MudItem xs="12">
+                <MudPaper Elevation="2" Class="pa-4 my-4">
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">Transações Recentes</MudText>
+                    <MudTable Items="@_recentTransactions" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_isLoading" 
+                            LoadingProgressColor="Color.Info" T="RecentTransactionModel">
+                        <HeaderContent>
+                            <MudTh>Data</MudTh>
+                            <MudTh>Descrição</MudTh>
+                            <MudTh>Categoria</MudTh>
+                            <MudTh>Conta</MudTh>
+                            <MudTh>Valor</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Data">@context.Date.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd DataLabel="Descrição">@context.Description</MudTd>
+                            <MudTd DataLabel="Categoria">@context.Category</MudTd>
+                            <MudTd DataLabel="Conta">@context.Account</MudTd>
+                            <MudTd DataLabel="Valor">
+                                <span style="@(context.Amount < 0 ? "color: red" : "color: green")">
+                                    @context.Amount.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                                </span>
+                            </MudTd>
+                        </RowTemplate>
+                        <PagerContent>
+                            <MudTablePager PageSizeOptions="new int[] { 5, 10, 25 }" />
+                        </PagerContent>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
 </MudContainer>
 
-<style>
-    .chart-placeholder {
-        height: 300px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .mock-chart {
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #f5f5f5 25%, #e9e9e9 25%, #e9e9e9 50%, #f5f5f5 50%, #f5f5f5 75%, #e9e9e9 75%, #e9e9e9 100%);
-        background-size: 20.00px 20.00px;
-        border-radius: 4px;
-    }
-</style>
-
 @code {
-    private class Transaction
+    private bool _isLoading = true;
+    private DashboardSummary _summary = new DashboardSummary();
+    private List<RecentTransactionModel> _recentTransactions = new List<RecentTransactionModel>();
+    private double[] _categoryData = new double[] { 30, 20, 15, 10, 25 };
+    private string[] _categoryLabels = new string[] { "Alimentação", "Moradia", "Transporte", "Lazer", "Outros" };
+    private List<ChartSeries> _categorySeries = new List<ChartSeries>();
+    private List<ChartSeries> _forecastSeries = new List<ChartSeries>();
+    private string[] _forecastLabels = new string[] { "Jan", "Fev", "Mar", "Abr", "Mai", "Jun" };
+    
+    protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            _isLoading = true;
+            await Task.Delay(1000); // Simula chamada de rede
+
+            // Em um cenário real, estas informações viriam da API
+            _summary = await DashboardService.GetDashboardSummaryAsync();
+            _recentTransactions = await DashboardService.GetRecentTransactionsAsync(10);
+            
+            // Configura o gráfico de categorias
+            _categorySeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Gastos por Categoria", Data = _categoryData }
+            };
+            
+            // Configura o gráfico de previsão
+            _forecastSeries = new List<ChartSeries>
+            {
+                new ChartSeries 
+                { 
+                    Name = "Receitas", 
+                    Data = new double[] { 15000, 15200, 15300, 16000, 16200, 16500 } 
+                },
+                new ChartSeries 
+                { 
+                    Name = "Despesas", 
+                    Data = new double[] { 10000, 10500, 9800, 11000, 10700, 11200 } 
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar dados do dashboard: {ex.Message}");
+            // Tratamento de erro poderia mostrar um Snackbar em caso real
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+    
+    public class RecentTransactionModel
+    {
+        public int Id { get; set; }
         public DateTime Date { get; set; }
         public string Description { get; set; }
         public string Category { get; set; }
+        public string Account { get; set; }
         public decimal Amount { get; set; }
-        public string Type { get; set; }
-    }
-
-    private class UpcomingPayment
-    {
-        public DateTime DueDate { get; set; }
-        public string Description { get; set; }
-        public string Type { get; set; }
-        public decimal Amount { get; set; }
-    }
-
-    private List<Transaction> _lastTransactions = new List<Transaction>
-    {
-        new Transaction { Date = DateTime.Now.AddDays(-1), Description = "Supermercado Extra", Category = "Alimentação", Amount = 245.67m, Type = "Despesa" },
-        new Transaction { Date = DateTime.Now.AddDays(-2), Description = "Salário", Category = "Renda", Amount = 4500.00m, Type = "Receita" },
-        new Transaction { Date = DateTime.Now.AddDays(-3), Description = "Netflix", Category = "Entretenimento", Amount = 39.90m, Type = "Despesa" },
-        new Transaction { Date = DateTime.Now.AddDays(-5), Description = "Farmácia", Category = "Saúde", Amount = 87.54m, Type = "Despesa" },
-        new Transaction { Date = DateTime.Now.AddDays(-7), Description = "Transferência recebida", Category = "Transferência", Amount = 350.00m, Type = "Receita" }
-    };
-
-    private List<UpcomingPayment> _upcomingPayments = new List<UpcomingPayment>
-    {
-        new UpcomingPayment { DueDate = DateTime.Now.AddDays(-2), Description = "Internet", Type = "Conta", Amount = 99.90m },
-        new UpcomingPayment { DueDate = DateTime.Now.AddDays(3), Description = "Aluguel", Type = "Moradia", Amount = 1500.00m },
-        new UpcomingPayment { DueDate = DateTime.Now.AddDays(7), Description = "Fatura Cartão Nubank", Type = "Cartão de Crédito", Amount = 1250.45m },
-        new UpcomingPayment { DueDate = DateTime.Now.AddDays(10), Description = "Energia Elétrica", Type = "Conta", Amount = 175.33m },
-        new UpcomingPayment { DueDate = DateTime.Now.AddDays(12), Description = "Plano de Saúde", Type = "Saúde", Amount = 450.00m }
-    };
-
-    private bool IsOverdue(DateTime dueDate)
-    {
-        return dueDate < DateTime.Today;
     }
 }

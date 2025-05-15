@@ -1,100 +1,106 @@
-using Blazored.LocalStorage;
-using Microsoft.AspNetCore.Components.Authorization;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using System.Text.Json;
+using System.Threading.Tasks;
+using Blazored.LocalStorage;
 using FinanceManager.ClientApp.Services.Interfaces;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace FinanceManager.ClientApp.Services
 {
     public class CustomAuthStateProvider : AuthenticationStateProvider
     {
+        private readonly HttpClient _httpClient;
         private readonly ILocalStorageService _localStorage;
-        private const string AUTH_TOKEN_KEY = "authToken";
-        private const string AUTH_USER_KEY = "authUser";
-
-        public CustomAuthStateProvider(ILocalStorageService localStorage)
+        private readonly AuthenticationState _anonymous;
+        private const string AuthTokenName = "authToken";
+        
+        public CustomAuthStateProvider(HttpClient httpClient, ILocalStorageService localStorage)
         {
+            _httpClient = httpClient;
             _localStorage = localStorage;
+            _anonymous = new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
-
+        
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await _localStorage.GetItemAsStringAsync(AUTH_TOKEN_KEY);
-
-            if (string.IsNullOrEmpty(token))
+            var savedToken = await _localStorage.GetItemAsync<string>(AuthTokenName);
+            
+            if (string.IsNullOrWhiteSpace(savedToken))
             {
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+                return _anonymous;
             }
+            
+            _httpClient.DefaultRequestHeaders.Authorization = 
+                new AuthenticationHeaderValue("Bearer", savedToken);
+                
+            return new AuthenticationState(
+                new ClaimsPrincipal(
+                    new ClaimsIdentity(ParseClaimsFromJwt(savedToken), "jwt")));
+        }
+        
+        public void NotifyUserAuthentication(string token)
+        {
+            var authenticatedUser = new ClaimsPrincipal(
+                new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
+                
+            var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
+            NotifyAuthenticationStateChanged(authState);
+        }
+        
+        public void NotifyUserLogout()
+        {
+            var authState = Task.FromResult(_anonymous);
+            NotifyAuthenticationStateChanged(authState);
+        }
+        
+        private IEnumerable<Claim> ParseClaimsFromJwt(string jwt)
+        {
+            var claims = new List<Claim>();
+            var payload = jwt.Split('.')[1];
+            var jsonBytes = ParseBase64WithoutPadding(payload);
+            var keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
-            var userJson = await _localStorage.GetItemAsStringAsync(AUTH_USER_KEY);
-            UserInfo user = null;
-
-            if (!string.IsNullOrEmpty(userJson))
+            // Mapeia claims padrão e personalizadas
+            foreach (var kvp in keyValuePairs)
             {
-                user = JsonSerializer.Deserialize<UserInfo>(userJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            }
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user?.Name ?? ""),
-                new Claim(ClaimTypes.Email, user?.Email ?? ""),
-                new Claim(ClaimTypes.NameIdentifier, user?.Id ?? Guid.NewGuid().ToString()),
-                new Claim("token", token)
-            };
-
-            if (user?.Roles != null)
-            {
-                foreach (var role in user.Roles)
+                if (kvp.Value is JsonElement element)
                 {
-                    claims.Add(new Claim(ClaimTypes.Role, role));
+                    if (element.ValueKind == JsonValueKind.Array)
+                    {
+                        // Processa arrays (ex: roles)
+                        foreach (JsonElement e in element.EnumerateArray())
+                        {
+                            claims.Add(new Claim(kvp.Key, e.ToString()));
+                        }
+                    }
+                    else
+                    {
+                        // Processa valores simples
+                        claims.Add(new Claim(kvp.Key, element.ToString()));
+                    }
+                }
+                else
+                {
+                    claims.Add(new Claim(kvp.Key, kvp.Value.ToString()));
                 }
             }
 
-            var identity = new ClaimsIdentity(claims, "jwt");
-            var claimsPrincipal = new ClaimsPrincipal(identity);
-
-            return new AuthenticationState(claimsPrincipal);
+            return claims;
         }
-
-        public async Task MarkUserAsAuthenticated(string token, UserInfo user)
+        
+        private byte[] ParseBase64WithoutPadding(string base64)
         {
-            await _localStorage.SetItemAsStringAsync(AUTH_TOKEN_KEY, token);
-            await _localStorage.SetItemAsync(AUTH_USER_KEY, user);
-
-            var claims = new List<Claim>
+            switch (base64.Length % 4)
             {
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim("token", token)
-            };
-
-            if (user.Roles != null)
-            {
-                foreach (var role in user.Roles)
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, role));
-                }
+                case 2: base64 += "=="; break;
+                case 3: base64 += "="; break;
             }
-
-            var identity = new ClaimsIdentity(claims, "jwt");
-            var claimsPrincipal = new ClaimsPrincipal(identity);
-
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(claimsPrincipal)));
-        }
-
-        public async Task MarkUserAsLoggedOut()
-        {
-            await _localStorage.RemoveItemAsync(AUTH_TOKEN_KEY);
-            await _localStorage.RemoveItemAsync(AUTH_USER_KEY);
-
-            var identity = new ClaimsIdentity();
-            var user = new ClaimsPrincipal(identity);
-
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+            return Convert.FromBase64String(base64);
         }
     }
 }

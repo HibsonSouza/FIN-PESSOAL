@@ -1,0 +1,74 @@
+@inject NavigationManager NavigationManager
+
+<MudNavMenu>
+    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="px-4 mt-2 mb-2">Menu Principal</MudText>
+    
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+        Dashboard
+    </MudNavLink>
+    
+    <MudNavLink Href="/transacoes" Icon="@Icons.Material.Filled.Receipt">
+        Transações
+    </MudNavLink>
+    
+    <MudNavLink Href="/categorias" Icon="@Icons.Material.Filled.Category">
+        Categorias
+    </MudNavLink>
+    
+    <MudNavLink Href="/contas" Icon="@Icons.Material.Filled.AccountBalance">
+        Contas Bancárias
+    </MudNavLink>
+    
+    <MudNavLink Href="/cartoes" Icon="@Icons.Material.Filled.CreditCard">
+        Cartões de Crédito
+    </MudNavLink>
+    
+    <MudDivider Class="my-2" />
+    
+    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="px-4 mt-2 mb-2">Planejamento</MudText>
+    
+    <MudNavLink Href="/orcamentos" Icon="@Icons.Material.Filled.MonetizationOn">
+        Orçamentos
+    </MudNavLink>
+    
+    <MudNavLink Href="/metas" Icon="@Icons.Material.Filled.Flag">
+        Metas Financeiras
+    </MudNavLink>
+    
+    <MudDivider Class="my-2" />
+    
+    <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="px-4 mt-2 mb-2">Relatórios</MudText>
+    
+    <MudNavLink Href="/relatorios/mensal" Icon="@Icons.Material.Filled.InsertChart">
+        Relatório Mensal
+    </MudNavLink>
+    
+    <MudNavLink Href="/relatorios/categorias" Icon="@Icons.Material.Filled.PieChart">
+        Por Categorias
+    </MudNavLink>
+    
+    <MudNavLink Href="/relatorios/tendencias" Icon="@Icons.Material.Filled.TrendingUp">
+        Tendências
+    </MudNavLink>
+</MudNavMenu>
+
+@code {
+    private string _currentUrl = "";
+    
+    protected override void OnInitialized()
+    {
+        _currentUrl = NavigationManager.Uri;
+        NavigationManager.LocationChanged += LocationChanged;
+    }
+    
+    private void LocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _currentUrl = e.Location;
+        StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= LocationChanged;
+    }
+}

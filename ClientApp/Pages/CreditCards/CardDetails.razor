@@ -345,7 +345,7 @@ else
     private List<TransactionViewModel> _transactions = new();
     private bool _isLoading = true;
     private bool _isTransactionsLoading = false;
-    private DateRange _dateRange = new(DateTime.Now.AddMonths(-1), DateTime.Now);
+    private DateTimeRange _dateRange = new(DateTime.Now.AddMonths(-1), DateTime.Now);
     private string _monthlyExpensesChartId = "monthlyExpensesChart";
     private CreditCardBillViewModel _currentBill = new();
 

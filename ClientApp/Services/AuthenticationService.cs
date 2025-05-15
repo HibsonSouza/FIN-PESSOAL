@@ -1,6 +1,3 @@
-using Blazored.LocalStorage;
-using FinanceManager.ClientApp.Services.Interfaces;
-using Microsoft.AspNetCore.Components.Authorization;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,6 +5,9 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Blazored.LocalStorage;
+using FinanceManager.ClientApp.Services.Interfaces;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace FinanceManager.ClientApp.Services
 {
@@ -16,7 +16,9 @@ namespace FinanceManager.ClientApp.Services
         private readonly HttpClient _httpClient;
         private readonly AuthenticationStateProvider _authStateProvider;
         private readonly ILocalStorageService _localStorage;
-        private readonly string _apiUrl = "api/auth";
+        private const string AuthTokenName = "authToken";
+        private const string RefreshTokenName = "refreshToken";
+        private const string UserInfoName = "userInfo";
 
         public AuthenticationService(
             HttpClient httpClient,
@@ -38,240 +40,182 @@ namespace FinanceManager.ClientApp.Services
                     Password = password
                 };
 
-                var response = await _httpClient.PostAsJsonAsync($"{_apiUrl}/login", loginModel);
+                var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginModel);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<AuthResult>();
+                    var authResult = await response.Content.ReadFromJsonAsync<AuthResult>();
 
-                    if (result.Success)
+                    if (authResult.Success)
                     {
-                        await ((CustomAuthStateProvider)_authStateProvider).MarkUserAsAuthenticated(result.Token, result.User);
-                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.Token);
+                        await _localStorage.SetItemAsync(AuthTokenName, authResult.Token);
+                        await _localStorage.SetItemAsync(RefreshTokenName, authResult.RefreshToken);
+                        await _localStorage.SetItemAsync(UserInfoName, authResult.User);
+
+                        ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(authResult.Token);
+
+                        _httpClient.DefaultRequestHeaders.Authorization = 
+                            new AuthenticationHeaderValue("Bearer", authResult.Token);
+
+                        return authResult;
                     }
 
-                    return result;
+                    return AuthResult.FailedResult("Falha ao autenticar usuário");
                 }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    
-                    try
-                    {
-                        var errorResult = JsonSerializer.Deserialize<AuthResult>(errorContent, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
-                        
-                        return errorResult ?? AuthResult.Failed("Falha na autenticação. Por favor, tente novamente.");
-                    }
-                    catch
-                    {
-                        return AuthResult.Failed(response.StatusCode == System.Net.HttpStatusCode.Unauthorized 
-                            ? "Email ou senha inválidos." 
-                            : $"Erro de autenticação: {response.StatusCode}");
-                    }
-                }
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return AuthResult.FailedResult($"Falha ao autenticar: {response.StatusCode} - {errorContent}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro durante login: {ex.Message}");
-                return AuthResult.Failed("Erro na comunicação com o servidor. Por favor, tente novamente mais tarde.");
+                return AuthResult.FailedResult($"Erro na autenticação: {ex.Message}");
             }
         }
 
-        public async Task<AuthResult> Register(string email, string password, string confirmPassword, string name)
+        public async Task<AuthResult> Register(string name, string email, string password, string confirmPassword)
         {
             try
             {
                 var registerModel = new
                 {
+                    Name = name,
                     Email = email,
                     Password = password,
-                    ConfirmPassword = confirmPassword,
-                    Name = name
+                    ConfirmPassword = confirmPassword
                 };
 
-                var response = await _httpClient.PostAsJsonAsync($"{_apiUrl}/register", registerModel);
+                var response = await _httpClient.PostAsJsonAsync("api/auth/register", registerModel);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<AuthResult>();
-                    
-                    if (result.Success)
+                    var authResult = await response.Content.ReadFromJsonAsync<AuthResult>();
+
+                    if (authResult.Success)
                     {
-                        await ((CustomAuthStateProvider)_authStateProvider).MarkUserAsAuthenticated(result.Token, result.User);
-                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.Token);
+                        await _localStorage.SetItemAsync(AuthTokenName, authResult.Token);
+                        await _localStorage.SetItemAsync(RefreshTokenName, authResult.RefreshToken);
+                        await _localStorage.SetItemAsync(UserInfoName, authResult.User);
+
+                        ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(authResult.Token);
+
+                        _httpClient.DefaultRequestHeaders.Authorization = 
+                            new AuthenticationHeaderValue("Bearer", authResult.Token);
+
+                        return authResult;
                     }
-                    
-                    return result;
+
+                    return AuthResult.FailedResult("Falha ao registrar usuário");
                 }
-                else
+
+                var errorContent = await response.Content.ReadAsStringAsync();
+                return AuthResult.FailedResult($"Falha ao registrar: {response.StatusCode} - {errorContent}");
+            }
+            catch (Exception ex)
+            {
+                return AuthResult.FailedResult($"Erro no registro: {ex.Message}");
+            }
+        }
+
+        public async Task<AuthResult> RefreshToken()
+        {
+            try
+            {
+                var savedToken = await _localStorage.GetItemAsync<string>(AuthTokenName);
+                var refreshToken = await _localStorage.GetItemAsync<string>(RefreshTokenName);
+
+                if (string.IsNullOrEmpty(savedToken) || string.IsNullOrEmpty(refreshToken))
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    
-                    try
+                    return AuthResult.FailedResult("Token de acesso não encontrado");
+                }
+
+                var refreshModel = new
+                {
+                    Token = savedToken,
+                    RefreshToken = refreshToken
+                };
+
+                _httpClient.DefaultRequestHeaders.Authorization = 
+                    new AuthenticationHeaderValue("Bearer", savedToken);
+
+                var response = await _httpClient.PostAsJsonAsync("api/auth/refresh", refreshModel);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var authResult = await response.Content.ReadFromJsonAsync<AuthResult>();
+
+                    if (authResult.Success)
                     {
-                        var errorResult = JsonSerializer.Deserialize<AuthResult>(errorContent, new JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
+                        await _localStorage.SetItemAsync(AuthTokenName, authResult.Token);
+                        await _localStorage.SetItemAsync(RefreshTokenName, authResult.RefreshToken);
                         
-                        return errorResult ?? AuthResult.Failed("Falha no registro. Por favor, tente novamente.");
-                    }
-                    catch
-                    {
-                        return AuthResult.Failed($"Erro no registro: {response.StatusCode}");
+                        ((CustomAuthStateProvider)_authStateProvider).NotifyUserAuthentication(authResult.Token);
+                        
+                        return authResult;
                     }
                 }
+
+                // Se não conseguiu atualizar, desloga o usuário
+                await Logout();
+                return AuthResult.FailedResult("Não foi possível atualizar o token");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro durante registro: {ex.Message}");
-                return AuthResult.Failed("Erro na comunicação com o servidor. Por favor, tente novamente mais tarde.");
-            }
-        }
-
-        public async Task<bool> ChangePassword(string currentPassword, string newPassword, string confirmPassword)
-        {
-            try
-            {
-                var token = await _localStorage.GetItemAsStringAsync("authToken");
-                
-                if (string.IsNullOrEmpty(token))
-                    return false;
-                
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                
-                var changePasswordModel = new
-                {
-                    CurrentPassword = currentPassword,
-                    NewPassword = newPassword,
-                    ConfirmPassword = confirmPassword
-                };
-
-                var response = await _httpClient.PostAsJsonAsync($"{_apiUrl}/change-password", changePasswordModel);
-                
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erro durante alteração de senha: {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<bool> ForgotPassword(string email)
-        {
-            try
-            {
-                var model = new { Email = email };
-                var response = await _httpClient.PostAsJsonAsync($"{_apiUrl}/forgot-password", model);
-                
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erro durante recuperação de senha: {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<bool> ResetPassword(string email, string token, string newPassword, string confirmPassword)
-        {
-            try
-            {
-                var resetPasswordModel = new
-                {
-                    Email = email,
-                    Token = token,
-                    NewPassword = newPassword,
-                    ConfirmPassword = confirmPassword
-                };
-
-                var response = await _httpClient.PostAsJsonAsync($"{_apiUrl}/reset-password", resetPasswordModel);
-                
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erro durante redefinição de senha: {ex.Message}");
-                return false;
+                await Logout();
+                return AuthResult.FailedResult($"Erro ao atualizar token: {ex.Message}");
             }
         }
 
         public async Task Logout()
         {
-            await ((CustomAuthStateProvider)_authStateProvider).MarkUserAsLoggedOut();
+            await _localStorage.RemoveItemAsync(AuthTokenName);
+            await _localStorage.RemoveItemAsync(RefreshTokenName);
+            await _localStorage.RemoveItemAsync(UserInfoName);
+            
+            ((CustomAuthStateProvider)_authStateProvider).NotifyUserLogout();
+            
             _httpClient.DefaultRequestHeaders.Authorization = null;
         }
 
-        public async Task<UserInfo> GetUserInfo()
+        public async Task<bool> IsAuthenticated()
         {
-            try
-            {
-                var token = await _localStorage.GetItemAsStringAsync("authToken");
-                
-                if (string.IsNullOrEmpty(token))
-                    return null;
-                
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                
-                var response = await _httpClient.GetAsync($"{_apiUrl}/me");
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadFromJsonAsync<UserInfo>();
-                }
-                
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erro ao obter informações do usuário: {ex.Message}");
-                return null;
-            }
+            var savedToken = await _localStorage.GetItemAsync<string>(AuthTokenName);
+            return !string.IsNullOrEmpty(savedToken);
         }
 
-        public async Task<bool> UpdateUserProfile(UserProfileUpdateModel model)
+        public async Task<string> GetToken()
         {
-            try
+            return await _localStorage.GetItemAsync<string>(AuthTokenName);
+        }
+
+        public async Task<UserModel> GetUserInfo()
+        {
+            var userInfo = await _localStorage.GetItemAsync<UserModel>(UserInfoName);
+            
+            if (userInfo != null)
             {
-                var token = await _localStorage.GetItemAsStringAsync("authToken");
-                
-                if (string.IsNullOrEmpty(token))
-                    return false;
-                
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                
-                var response = await _httpClient.PutAsJsonAsync($"{_apiUrl}/profile", model);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    var userInfo = await GetUserInfo();
-                    
-                    if (userInfo != null)
-                    {
-                        var authResult = new AuthResult
-                        {
-                            Success = true,
-                            Token = token,
-                            User = userInfo
-                        };
-                        
-                        await _localStorage.SetItemAsync("authUser", authResult.User);
-                    }
-                    
-                    return true;
-                }
-                
-                return false;
+                return userInfo;
             }
-            catch (Exception ex)
+
+            var token = await _localStorage.GetItemAsync<string>(AuthTokenName);
+            
+            if (string.IsNullOrEmpty(token))
             {
-                Console.WriteLine($"Erro ao atualizar perfil do usuário: {ex.Message}");
-                return false;
+                return null;
             }
+
+            _httpClient.DefaultRequestHeaders.Authorization = 
+                new AuthenticationHeaderValue("Bearer", token);
+                
+            var response = await _httpClient.GetAsync("api/auth/userinfo");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                userInfo = await response.Content.ReadFromJsonAsync<UserModel>();
+                await _localStorage.SetItemAsync(UserInfoName, userInfo);
+                return userInfo;
+            }
+            
+            return null;
         }
     }
 }
