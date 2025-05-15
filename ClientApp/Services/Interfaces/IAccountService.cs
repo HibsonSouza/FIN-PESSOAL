@@ -1,16 +1,17 @@
-using FinanceManager.ClientApp.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using FinanceManager.ClientApp.Models;
 
-namespace FinanceManager.ClientApp.Services
+namespace FinanceManager.ClientApp.Services.Interfaces
 {
     public interface IAccountService
     {
         Task<List<AccountViewModel>> GetAccountsAsync();
-        Task<AccountViewModel> GetAccountByIdAsync(string id);
+        Task<AccountViewModel> GetAccountByIdAsync(int id);
         Task<AccountViewModel> CreateAccountAsync(AccountCreateModel account);
-        Task<AccountViewModel> UpdateAccountAsync(string id, AccountUpdateModel account);
-        Task<bool> DeleteAccountAsync(string id);
-        Task<List<AccountBalanceHistoryViewModel>> GetAccountBalanceHistoryAsync(string id, DateTime? startDate = null, DateTime? endDate = null);
+        Task<AccountViewModel> UpdateAccountAsync(int id, AccountUpdateModel account);
+        Task<bool> DeleteAccountAsync(int id);
+        Task<decimal> GetTotalBalanceAsync();
+        Task<List<TransactionViewModel>> GetAccountTransactionsAsync(int accountId, int count = 10);
     }
 }

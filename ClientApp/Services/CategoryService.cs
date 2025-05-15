@@ -1,62 +1,137 @@
+using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using FinanceManager.ClientApp.Models;
+using FinanceManager.ClientApp.Services.Interfaces;
 
 namespace FinanceManager.ClientApp.Services
 {
-    public interface ICategoryService
-    {
-        Task<List<CategoryViewModel>> GetCategoriesAsync();
-        Task<CategoryViewModel> GetCategoryByIdAsync(string id);
-        Task<CategoryViewModel> CreateCategoryAsync(CategoryFormModel category);
-        Task<CategoryViewModel> UpdateCategoryAsync(string id, CategoryFormModel category);
-        Task DeleteCategoryAsync(string id);
-        Task<List<CategoryViewModel>> GetCategoriesByTypeAsync(TransactionType type);
-        Task InitializeDefaultCategoriesAsync();
-    }
-
     public class CategoryService : ICategoryService
     {
-        private readonly IHttpService _httpService;
+        private readonly HttpClient _httpClient;
 
-        public CategoryService(IHttpService httpService)
+        public CategoryService(HttpClient httpClient)
         {
-            _httpService = httpService;
+            _httpClient = httpClient;
         }
 
-        public async Task<List<CategoryViewModel>> GetCategoriesAsync()
+        public async Task<List<CategoryViewModel>> GetCategoriesAsync(CategoryType? type = null)
         {
-            return await _httpService.GetAsync<List<CategoryViewModel>>("api/categories");
+            try
+            {
+                string url = "api/categories";
+                if (type.HasValue)
+                {
+                    url += $"?type={type}";
+                }
+                
+                var categories = await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>(url);
+                return categories ?? new List<CategoryViewModel>();
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return new List<CategoryViewModel>();
+            }
         }
 
-        public async Task<CategoryViewModel> GetCategoryByIdAsync(string id)
+        public async Task<CategoryViewModel> GetCategoryByIdAsync(int id)
         {
-            return await _httpService.GetAsync<CategoryViewModel>($"api/categories/{id}");
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<CategoryViewModel>($"api/categories/{id}");
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return null;
+            }
         }
 
-        public async Task<CategoryViewModel> CreateCategoryAsync(CategoryFormModel category)
+        public async Task<CategoryViewModel> CreateCategoryAsync(CategoryCreateModel category)
         {
-            return await _httpService.PostAsync<CategoryViewModel>("api/categories", category);
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("api/categories", category);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<CategoryViewModel>();
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return null;
+            }
         }
 
-        public async Task<CategoryViewModel> UpdateCategoryAsync(string id, CategoryFormModel category)
+        public async Task<CategoryViewModel> UpdateCategoryAsync(int id, CategoryUpdateModel category)
         {
-            return await _httpService.PutAsync<CategoryViewModel>($"api/categories/{id}", category);
+            try
+            {
+                var response = await _httpClient.PutAsJsonAsync($"api/categories/{id}", category);
+                response.EnsureSuccessStatusCode();
+                return await response.Content.ReadFromJsonAsync<CategoryViewModel>();
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return null;
+            }
         }
 
-        public async Task DeleteCategoryAsync(string id)
+        public async Task<bool> DeleteCategoryAsync(int id)
         {
-            await _httpService.DeleteAsync($"api/categories/{id}");
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"api/categories/{id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return false;
+            }
         }
 
-        public async Task<List<CategoryViewModel>> GetCategoriesByTypeAsync(TransactionType type)
+        public async Task<List<CategoryViewModel>> GetParentCategoriesAsync()
         {
-            return await _httpService.GetAsync<List<CategoryViewModel>>($"api/categories/by-type/{type}");
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>("api/categories/parents");
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return new List<CategoryViewModel>();
+            }
         }
 
-        public async Task InitializeDefaultCategoriesAsync()
+        public async Task<List<CategoryViewModel>> GetSubcategoriesAsync(int parentId)
         {
-            await _httpService.PostAsync<object>("api/categories/initialize-default", null);
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<List<CategoryViewModel>>($"api/categories/{parentId}/subcategories");
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return new List<CategoryViewModel>();
+            }
+        }
+
+        public async Task<Dictionary<string, decimal>> GetCategorySpendingAsync(int month, int year)
+        {
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<Dictionary<string, decimal>>(
+                    $"api/categories/spending?month={month}&year={year}");
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return new Dictionary<string, decimal>();
+            }
         }
     }
 }

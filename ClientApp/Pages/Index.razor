@@ -1,73 +1,431 @@
 @page "/"
+@inject IAccountService AccountService
+@inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
+@inject IBudgetService BudgetService
+@inject ICreditCardService CreditCardService
+@inject IInvestmentService InvestmentService
 
-<PageTitle>Finance Manager</PageTitle>
+<PageTitle>Dashboard - Gerenciador Financeiro</PageTitle>
 
-<h1>Finance Manager</h1>
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudText Typo="Typo.h4" Class="mb-4">Dashboard Financeiro</MudText>
+    
+    <MudGrid>
+        <!-- Resumo Financeiro -->
+        <MudItem xs="12">
+            <MudText Typo="Typo.h5" Class="mb-2">Resumo Financeiro</MudText>
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="2" Class="pa-4 mud-height-full">
+                        <MudText Typo="Typo.subtitle1">Saldo Total</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Primary">R$ @_totalBalance.ToString("N2")</MudText>
+                        <MudDivider Class="my-2" />
+                        <MudText Typo="Typo.caption">Atualizado em: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</MudText>
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="2" Class="pa-4 mud-height-full">
+                        <MudText Typo="Typo.subtitle1">Receitas (mês atual)</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Success">R$ @_monthlyIncome.ToString("N2")</MudText>
+                        <MudDivider Class="my-2" />
+                        <MudText Typo="Typo.caption">
+                            @if (_incomePercentage > 0)
+                            {
+                                <span class="d-inline-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Success" Size="Size.Small" Class="mr-1" />
+                                    @_incomePercentage.ToString("N1")% em relação ao mês anterior
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="d-inline-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Color="Color.Error" Size="Size.Small" Class="mr-1" />
+                                    @Math.Abs(_incomePercentage).ToString("N1")% em relação ao mês anterior
+                                </span>
+                            }
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="2" Class="pa-4 mud-height-full">
+                        <MudText Typo="Typo.subtitle1">Despesas (mês atual)</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Error">R$ @_monthlyExpenses.ToString("N2")</MudText>
+                        <MudDivider Class="my-2" />
+                        <MudText Typo="Typo.caption">
+                            @if (_expensesPercentage < 0)
+                            {
+                                <span class="d-inline-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Color="Color.Success" Size="Size.Small" Class="mr-1" />
+                                    @Math.Abs(_expensesPercentage).ToString("N1")% em relação ao mês anterior
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="d-inline-flex align-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Error" Size="Size.Small" Class="mr-1" />
+                                    @_expensesPercentage.ToString("N1")% em relação ao mês anterior
+                                </span>
+                            }
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="2" Class="pa-4 mud-height-full">
+                        <MudText Typo="Typo.subtitle1">Saldo Mensal</MudText>
+                        <MudText Typo="Typo.h5" Color="@(_monthlySavings >= 0 ? Color.Success : Color.Error)">
+                            R$ @_monthlySavings.ToString("N2")
+                        </MudText>
+                        <MudDivider Class="my-2" />
+                        <MudText Typo="Typo.caption">Diferença entre receitas e despesas no mês</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+        
+        <!-- Gráficos e Transações Recentes -->
+        <MudItem xs="12" md="8">
+            <MudPaper Elevation="2" Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-2">Fluxo Financeiro (Últimos 6 meses)</MudText>
+                <MudChart ChartType="ChartType.Line" ChartSeries="@_financialFlowSeries" XAxisLabels="@_monthLabels" Width="100%" Height="350px"></MudChart>
+            </MudPaper>
+            
+            <MudText Typo="Typo.h5" Class="mb-2 mt-4">Transações Recentes</MudText>
+            <MudPaper Elevation="2">
+                <MudList Clickable="true">
+                    @if (_recentTransactions.Any())
+                    {
+                        @foreach (var transaction in _recentTransactions)
+                        {
+                            <MudListItem>
+                                <div class="d-flex justify-space-between align-center" style="width: 100%">
+                                    <div class="d-flex">
+                                        <MudAvatar Color="@(transaction.Type == TransactionType.Income ? Color.Success : Color.Error)" 
+                                                  Class="mr-3">
+                                            <MudIcon Icon="@(transaction.Type == TransactionType.Income ? Icons.Material.Filled.ArrowUpward : Icons.Material.Filled.ArrowDownward)" />
+                                        </MudAvatar>
+                                        <div>
+                                            <MudText Typo="Typo.body1">@transaction.Description</MudText>
+                                            <MudText Typo="Typo.caption">@transaction.Date.ToString("dd/MM/yyyy") - @transaction.CategoryName</MudText>
+                                        </div>
+                                    </div>
+                                    <MudText Typo="Typo.body1" Color="@(transaction.Type == TransactionType.Income ? Color.Success : Color.Error)">
+                                        @(transaction.Type == TransactionType.Income ? "+" : "-")R$ @transaction.Amount.ToString("N2")
+                                    </MudText>
+                                </div>
+                            </MudListItem>
+                            <MudDivider />
+                        }
+                    }
+                    else
+                    {
+                        <MudListItem>
+                            <MudText Typo="Typo.body1" Align="Align.Center">Nenhuma transação recente encontrada.</MudText>
+                        </MudListItem>
+                    }
+                </MudList>
+                
+                <div class="pa-3 d-flex justify-end">
+                    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/transactions">Ver todas transações</MudButton>
+                </div>
+            </MudPaper>
+        </MudItem>
+        
+        <MudItem xs="12" md="4">
+            <!-- Orçamento Mensal -->
+            <MudPaper Elevation="2" Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-2">Orçamento Mensal</MudText>
+                
+                @if (_budgetData.Any())
+                {
+                    <MudChart ChartType="ChartType.Donut" Width="100%" Height="300px" 
+                             InputData="@_budgetChartData" InputLabels="@_budgetChartLabels"></MudChart>
+                    
+                    @foreach (var budget in _budgetData)
+                    {
+                        <div class="my-3">
+                            <div class="d-flex justify-space-between mb-1">
+                                <MudText Typo="Typo.body2">@budget.CategoryName</MudText>
+                                <MudText Typo="Typo.body2">
+                                    R$ @budget.CurrentAmount.ToString("N2") / R$ @budget.BudgetAmount.ToString("N2")
+                                </MudText>
+                            </div>
+                            <MudProgressLinear Color="@GetBudgetColor(budget.Percentage)" 
+                                              Value="@budget.Percentage" 
+                                              Class="my-1">
+                                <MudText Typo="Typo.caption" Class="mud-progress-linear-text">
+                                    @budget.Percentage.ToString("N0")%
+                                </MudText>
+                            </MudProgressLinear>
+                        </div>
+                    }
+                    
+                    <div class="d-flex justify-end mt-4">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/budgets">Gerenciar orçamentos</MudButton>
+                    </div>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info" Class="my-4">
+                        Nenhum orçamento configurado para este mês.
+                    </MudAlert>
+                    
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/budgets/create">
+                        Criar orçamento
+                    </MudButton>
+                }
+            </MudPaper>
+            
+            <!-- Cartões de Crédito -->
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-2">Cartões de Crédito</MudText>
+                
+                @if (_creditCards.Any())
+                {
+                    @foreach (var card in _creditCards)
+                    {
+                        <MudCard Elevation="0" Class="mb-4 pa-2" Style="border: 1px solid #eee; border-radius: 8px;">
+                            <MudCardContent Class="py-1">
+                                <div class="d-flex justify-space-between align-center">
+                                    <div>
+                                        <MudText Typo="Typo.body1">@card.Name</MudText>
+                                        <MudText Typo="Typo.caption">Fatura atual: R$ @card.CurrentStatement.ToString("N2")</MudText>
+                                    </div>
+                                    <MudAvatar Color="Color.Primary" Size="Size.Small">
+                                        <MudIcon Icon="@Icons.Material.Filled.CreditCard" Size="Size.Small" />
+                                    </MudAvatar>
+                                </div>
+                                <MudDivider Class="my-2" />
+                                <div class="d-flex justify-space-between">
+                                    <MudText Typo="Typo.caption">Limite: R$ @card.Limit.ToString("N2")</MudText>
+                                    <MudText Typo="Typo.caption">Vencimento: dia @card.DueDay</MudText>
+                                </div>
+                                
+                                <MudProgressLinear Color="@GetCreditCardColor(card.CurrentStatement, card.Limit)" 
+                                                  Value="@(100 * card.CurrentStatement / card.Limit)" 
+                                                  Class="mt-2" />
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                    
+                    <div class="d-flex justify-end mt-2">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/credit-cards">
+                            Ver todos cartões
+                        </MudButton>
+                    </div>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Info" Class="my-4">
+                        Nenhum cartão de crédito cadastrado.
+                    </MudAlert>
+                    
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/credit-cards/create">
+                        Adicionar cartão
+                    </MudButton>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
-<p>Welcome to your personal Finance Manager application.</p>
-
-<div class="row mt-4">
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                Accounts
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Manage Your Accounts</h5>
-                <p class="card-text">View your checking, savings, and investment accounts all in one place.</p>
-                <a href="accounts" class="btn btn-primary">Go to Accounts</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                Transactions
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Track Your Spending</h5>
-                <p class="card-text">Monitor all your financial transactions with detailed reports and categories.</p>
-                <a href="transactions" class="btn btn-primary">Go to Transactions</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                Budgets
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Create Budgets</h5>
-                <p class="card-text">Set up monthly budgets and track your progress to meet financial goals.</p>
-                <a href="budgets" class="btn btn-primary">Go to Budgets</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                Investments
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Monitor Your Investments</h5>
-                <p class="card-text">Keep track of your stocks, bonds, and other investments in one dashboard.</p>
-                <a href="investments" class="btn btn-primary">Go to Investments</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                Reports
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Financial Reports</h5>
-                <p class="card-text">Generate detailed reports and visualizations of your financial health.</p>
-                <a href="reports" class="btn btn-primary">Go to Reports</a>
-            </div>
-        </div>
-    </div>
-</div>
+@code {
+    // Dados de exemplo para demonstração
+    private decimal _totalBalance = 12475.89m;
+    private decimal _monthlyIncome = 7500.00m;
+    private decimal _monthlyExpenses = 4235.67m;
+    private decimal _monthlySavings => _monthlyIncome - _monthlyExpenses;
+    private decimal _incomePercentage = 5.7m;
+    private decimal _expensesPercentage = -2.3m;
+    
+    // Fluxo financeiro
+    private List<ChartSeries> _financialFlowSeries = new();
+    private string[] _monthLabels = new[] { "Jan", "Fev", "Mar", "Abr", "Mai", "Jun" };
+    
+    // Transações
+    private List<TransactionViewModel> _recentTransactions = new();
+    
+    // Orçamentos
+    private List<BudgetSummaryModel> _budgetData = new();
+    private double[] _budgetChartData = new double[] { 65, 23, 12 };
+    private string[] _budgetChartLabels = new[] { "Moradia", "Alimentação", "Transporte" };
+    
+    // Cartões de crédito
+    private List<CreditCardSummaryModel> _creditCards = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadDemoData();
+        }
+        catch (Exception)
+        {
+            // Em um ambiente real, tratar adequadamente
+        }
+    }
+    
+    private async Task LoadDemoData()
+    {
+        // Inicializando dados de exemplo para demonstração
+        
+        // Fluxo financeiro (últimos 6 meses)
+        _financialFlowSeries = new List<ChartSeries>
+        {
+            new ChartSeries { Name = "Receitas", Data = new double[] { 6800, 7100, 6900, 7300, 7200, 7500 } },
+            new ChartSeries { Name = "Despesas", Data = new double[] { 4100, 4300, 3900, 4500, 4100, 4235 } }
+        };
+        
+        // Transações recentes
+        _recentTransactions = new List<TransactionViewModel>
+        {
+            new TransactionViewModel 
+            { 
+                Id = 1, 
+                Date = DateTime.Now.AddDays(-1), 
+                Description = "Salário", 
+                Amount = 7500.00m, 
+                Type = TransactionType.Income,
+                CategoryName = "Salário"
+            },
+            new TransactionViewModel 
+            { 
+                Id = 2, 
+                Date = DateTime.Now.AddDays(-2), 
+                Description = "Supermercado", 
+                Amount = 450.75m, 
+                Type = TransactionType.Expense,
+                CategoryName = "Alimentação"
+            },
+            new TransactionViewModel 
+            { 
+                Id = 3, 
+                Date = DateTime.Now.AddDays(-3), 
+                Description = "Aluguel", 
+                Amount = 1800.00m, 
+                Type = TransactionType.Expense,
+                CategoryName = "Moradia"
+            },
+            new TransactionViewModel 
+            { 
+                Id = 4, 
+                Date = DateTime.Now.AddDays(-5), 
+                Description = "Freelance", 
+                Amount = 1200.00m, 
+                Type = TransactionType.Income,
+                CategoryName = "Freela"
+            },
+            new TransactionViewModel 
+            { 
+                Id = 5, 
+                Date = DateTime.Now.AddDays(-5), 
+                Description = "Conta de energia", 
+                Amount = 235.45m, 
+                Type = TransactionType.Expense,
+                CategoryName = "Utilidades"
+            }
+        };
+        
+        // Orçamentos
+        _budgetData = new List<BudgetSummaryModel>
+        {
+            new BudgetSummaryModel 
+            { 
+                CategoryId = 1, 
+                CategoryName = "Moradia", 
+                BudgetAmount = 2000.00m, 
+                CurrentAmount = 1800.00m,
+                Percentage = 90.0
+            },
+            new BudgetSummaryModel 
+            { 
+                CategoryId = 2, 
+                CategoryName = "Alimentação", 
+                BudgetAmount = 1200.00m, 
+                CurrentAmount = 872.50m,
+                Percentage = 72.7
+            },
+            new BudgetSummaryModel 
+            { 
+                CategoryId = 3, 
+                CategoryName = "Transporte", 
+                BudgetAmount = 600.00m, 
+                CurrentAmount = 435.20m,
+                Percentage = 72.5
+            },
+            new BudgetSummaryModel 
+            { 
+                CategoryId = 4, 
+                CategoryName = "Lazer", 
+                BudgetAmount = 500.00m, 
+                CurrentAmount = 348.75m,
+                Percentage = 69.8
+            }
+        };
+        
+        // Cartões de crédito
+        _creditCards = new List<CreditCardSummaryModel>
+        {
+            new CreditCardSummaryModel 
+            { 
+                Id = 1, 
+                Name = "Nubank", 
+                Limit = 5000.00m, 
+                CurrentStatement = 2750.32m,
+                DueDay = 10
+            },
+            new CreditCardSummaryModel 
+            { 
+                Id = 2, 
+                Name = "Itaú Platinum", 
+                Limit = 12000.00m, 
+                CurrentStatement = 4320.15m,
+                DueDay = 15
+            }
+        };
+        
+        await Task.CompletedTask; // No ambiente real, substitua pelos métodos que buscam dados do servidor
+    }
+    
+    private Color GetBudgetColor(double percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => Color.Error,
+            >= 75 => Color.Warning,
+            _ => Color.Success
+        };
+    }
+    
+    private Color GetCreditCardColor(decimal current, decimal limit)
+    {
+        double percentage = (double)(current / limit * 100);
+        return percentage switch
+        {
+            >= 80 => Color.Error,
+            >= 60 => Color.Warning,
+            _ => Color.Success
+        };
+    }
+    
+    public class BudgetSummaryModel
+    {
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; }
+        public decimal BudgetAmount { get; set; }
+        public decimal CurrentAmount { get; set; }
+        public double Percentage { get; set; }
+    }
+    
+    public class CreditCardSummaryModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public decimal Limit { get; set; }
+        public decimal CurrentStatement { get; set; }
+        public int DueDay { get; set; }
+    }
+}

@@ -1,12 +1,27 @@
-<Router AppAssembly="@typeof(App).Assembly">
+﻿<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+            <Authorizing>
+                <div class="d-flex justify-center align-center" style="height: 100vh">
+                    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                </div>
+            </Authorizing>
+        </AuthorizeRouteView>
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
     <NotFound>
-        <PageTitle>Not found</PageTitle>
+        <PageTitle>Página não encontrada</PageTitle>
         <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
+            <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex flex-column align-center justify-center" Style="height: 70vh">
+                <MudText Typo="Typo.h2" Class="mb-4">404</MudText>
+                <MudText Typo="Typo.h5" Class="mb-4">Desculpe, não encontramos essa página.</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="/" StartIcon="@Icons.Material.Filled.Home">
+                    Voltar para a página inicial
+                </MudButton>
+            </MudContainer>
         </LayoutView>
     </NotFound>
 </Router>

@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Diagnostics;
 
 namespace FinanceManager.ClientApp.Pages
 {
@@ -22,6 +22,7 @@ namespace FinanceManager.ClientApp.Pages
         public void OnGet()
         {
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+            _logger.LogError($"Ocorreu um erro. ID da Requisição: {RequestId}");
         }
     }
 }

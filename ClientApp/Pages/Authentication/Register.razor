@@ -1,187 +1,162 @@
 @page "/register"
-@layout Login.EmptyLayout
-@inject IAuthService AuthService
+@layout Components.Layout.EmptyLayout
+@using FinanceManager.ClientApp.Services.Interfaces
+@using FinanceManager.ClientApp.Models
+
+@inject IAuthenticationService AuthService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center mud-height-full">
-    <MudPaper Elevation="3" Class="pa-8 auth-card">
-        <MudText Typo="Typo.h4" Class="mb-4" Align="Align.Center">Finance Manager</MudText>
-        <MudText Typo="Typo.h5" Align="Align.Center" GutterBottom="true">Create an Account</MudText>
-        
-        <MudForm @ref="_form" @bind-IsValid="@_success" @bind-Errors="@_errors">
-            <MudTextField 
-                T="string" 
-                Label="Full Name" 
-                @bind-Value="_model.Name" 
-                Required="true" 
-                RequiredError="Name is required!"
-                Variant="Variant.Outlined" 
-                Class="mb-3" />
+<div class="register-container">
+    <MudCard Elevation="4" Class="px-4 py-8" Style="width: 100%; max-width: 450px;">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-4">Gerenciador Financeiro</MudText>
+                <MudText Typo="Typo.h5" Align="Align.Center">Criar Conta</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <EditForm Model="@registerModel" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
                 
-            <MudTextField 
-                T="string" 
-                Label="Email" 
-                @bind-Value="_model.Email" 
-                Required="true" 
-                RequiredError="Email is required!"
-                Validation="@(new EmailAddressAttribute() { ErrorMessage = "That doesn't look like a valid email address" })"
-                Variant="Variant.Outlined" 
-                Class="mb-3" />
+                <MudTextField Label="Nome" 
+                            @bind-Value="registerModel.Name" 
+                            For="@(() => registerModel.Name)"
+                            Variant="Variant.Outlined" 
+                            Margin="Margin.Dense"
+                            FullWidth="true" 
+                            Required="true"
+                            InputType="InputType.Text"
+                            Class="mb-4" />
                 
-            <MudTextField 
-                T="string" 
-                Label="Password" 
-                @bind-Value="_model.Password"
-                Required="true" 
-                RequiredError="Password is required!"
-                Validation="@(new Func<string, IEnumerable<string>>(ValidatePassword))"
-                Variant="Variant.Outlined"
-                InputType="@_passwordInput" 
-                Adornment="Adornment.End" 
-                AdornmentIcon="@_passwordInputIcon" 
-                OnAdornmentClick="TogglePasswordVisibility" 
-                Class="mb-3" />
+                <MudTextField Label="Email" 
+                            @bind-Value="registerModel.Email" 
+                            For="@(() => registerModel.Email)"
+                            Variant="Variant.Outlined" 
+                            Margin="Margin.Dense"
+                            FullWidth="true" 
+                            Required="true"
+                            InputType="InputType.Email"
+                            Class="mb-4" />
                 
-            <MudTextField 
-                T="string" 
-                Label="Confirm Password" 
-                @bind-Value="_model.ConfirmPassword"
-                Required="true" 
-                RequiredError="Please confirm your password!"
-                Validation="@(new Func<string, string>(ValidatePasswordMatch))"
-                Variant="Variant.Outlined"
-                InputType="@_passwordInput" 
-                Class="mb-3" />
+                <MudTextField Label="Senha" 
+                            @bind-Value="registerModel.Password" 
+                            For="@(() => registerModel.Password)"
+                            Variant="Variant.Outlined" 
+                            Margin="Margin.Dense"
+                            FullWidth="true" 
+                            Required="true"
+                            InputType="@(_passwordVisible ? InputType.Text : InputType.Password)"
+                            Adornment="Adornment.End"
+                            AdornmentIcon="@(_passwordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                            OnAdornmentClick="() => _passwordVisible = !_passwordVisible"
+                            AdornmentAriaLabel="Mostrar senha"
+                            HelperText="Mínimo de 8 caracteres, incluindo letras maiúsculas, minúsculas e números"
+                            Class="mb-4" />
                 
-            <MudText Typo="Typo.caption" Class="mb-4">
-                By registering, you agree to our Terms of Service and Privacy Policy.
-            </MudText>
-            
-            @if (_isBusy)
-            {
-                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-3" />
-            }
-            
-            <MudButton 
-                Variant="Variant.Filled" 
-                Color="Color.Primary" 
-                FullWidth="true" 
-                Disabled="@(!_success || _isBusy)" 
-                OnClick="RegisterAsync" 
-                Class="mb-3">Register</MudButton>
+                <MudTextField Label="Confirmar Senha" 
+                            @bind-Value="registerModel.ConfirmPassword" 
+                            For="@(() => registerModel.ConfirmPassword)"
+                            Variant="Variant.Outlined" 
+                            Margin="Margin.Dense"
+                            FullWidth="true" 
+                            Required="true"
+                            InputType="@(_confirmPasswordVisible ? InputType.Text : InputType.Password)"
+                            Adornment="Adornment.End"
+                            AdornmentIcon="@(_confirmPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                            OnAdornmentClick="() => _confirmPasswordVisible = !_confirmPasswordVisible"
+                            AdornmentAriaLabel="Mostrar senha"
+                            Class="mb-4" />
+                
+                <MudText Typo="Typo.caption" Class="mb-4">
+                    Ao se registrar, você concorda com nossos <MudLink Href="#" Underline="Underline.Always">Termos de Uso</MudLink> e 
+                    <MudLink Href="#" Underline="Underline.Always">Política de Privacidade</MudLink>.
+                </MudText>
+                
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          ButtonType="ButtonType.Submit" 
+                          FullWidth="true"
+                          Size="Size.Large"
+                          Disabled="@_processing">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Processando...</span>
+                    }
+                    else
+                    {
+                        <span>Criar Conta</span>
+                    }
+                </MudButton>
+                
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Class="mt-4">@_errorMessage</MudAlert>
+                }
+            </EditForm>
             
             <MudDivider Class="my-4" />
             
             <MudText Align="Align.Center">
-                Already have an account? <MudLink Href="/login">Sign in</MudLink>
+                Já possui uma conta? <MudLink Href="login" Underline="Underline.Always">Faça login</MudLink>
             </MudText>
-        </MudForm>
-    </MudPaper>
-</MudContainer>
+        </MudCardContent>
+    </MudCard>
+</div>
+
+<style>
+    .register-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        padding: 1rem;
+    }
+</style>
 
 @code {
-    private RegisterModel _model = new();
-    private bool _success;
-    private string[] _errors = { };
-    private MudForm _form;
-    private bool _isBusy = false;
-    
-    private InputType _passwordInput = InputType.Password;
-    private string _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
-    
+    private RegisterModel registerModel = new RegisterModel();
+    private bool _processing = false;
+    private bool _passwordVisible = false;
+    private bool _confirmPasswordVisible = false;
+    private string _errorMessage = string.Empty;
+
     protected override void OnInitialized()
     {
-        // If user is already logged in, redirect to dashboard
-        if (AuthService.IsAuthenticated())
+        // Verifica se já está autenticado
+        if (AuthService.IsAuthenticated)
         {
             NavigationManager.NavigateTo("/");
         }
     }
-    
-    private async Task RegisterAsync()
+
+    private async Task HandleValidSubmit()
     {
-        if (!_success)
-        {
-            Snackbar.Add("Please fill in all required fields correctly.", Severity.Warning);
-            return;
-        }
-        
-        _isBusy = true;
-        
+        _processing = true;
+        _errorMessage = string.Empty;
+
         try
         {
-            var result = await AuthService.RegisterAsync(_model);
+            var result = await AuthService.RegisterAsync(registerModel);
             
-            if (result.Succeeded)
+            if (result.Success)
             {
-                Snackbar.Add("Registration successful! You can now log in.", Severity.Success);
+                Snackbar.Add("Conta criada com sucesso! Por favor, faça login.", Severity.Success);
                 NavigationManager.NavigateTo("/login");
             }
             else
             {
-                Snackbar.Add(result.ErrorMessage ?? "Registration failed. Please try again.", Severity.Error);
+                _errorMessage = result.Message ?? "Erro ao criar conta. Verifique os dados e tente novamente.";
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+            _errorMessage = $"Erro: {ex.Message}";
         }
         finally
         {
-            _isBusy = false;
+            _processing = false;
         }
-    }
-    
-    private IEnumerable<string> ValidatePassword(string password)
-    {
-        if (string.IsNullOrWhiteSpace(password))
-            yield return "Password is required!";
-        if (password?.Length < 8)
-            yield return "Password must be at least 8 characters long!";
-        if (!Regex.IsMatch(password ?? "", @"[A-Z]"))
-            yield return "Password must contain at least one uppercase letter!";
-        if (!Regex.IsMatch(password ?? "", @"[a-z]"))
-            yield return "Password must contain at least one lowercase letter!";
-        if (!Regex.IsMatch(password ?? "", @"[0-9]"))
-            yield return "Password must contain at least one digit!";
-    }
-    
-    private string ValidatePasswordMatch(string confirmPassword)
-    {
-        if (confirmPassword != _model.Password)
-            return "Passwords do not match!";
-        return null;
-    }
-    
-    private void TogglePasswordVisibility()
-    {
-        if (_passwordInput == InputType.Password)
-        {
-            _passwordInput = InputType.Text;
-            _passwordInputIcon = Icons.Material.Filled.Visibility;
-        }
-        else
-        {
-            _passwordInput = InputType.Password;
-            _passwordInputIcon = Icons.Material.Filled.VisibilityOff;
-        }
-    }
-    
-    public class RegisterModel
-    {
-        [Required(ErrorMessage = "Name is required")]
-        public string Name { get; set; }
-        
-        [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")]
-        public string Email { get; set; }
-        
-        [Required(ErrorMessage = "Password is required")]
-        public string Password { get; set; }
-        
-        [Required(ErrorMessage = "Please confirm your password")]
-        [Compare("Password", ErrorMessage = "Passwords do not match")]
-        public string ConfirmPassword { get; set; }
     }
 }

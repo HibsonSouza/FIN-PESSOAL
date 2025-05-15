@@ -1,54 +1,57 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Finance Manager</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿<MudNavMenu>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+    
+    <MudNavGroup Title="Finanças" Icon="@Icons.Material.Filled.AttachMoney" Expanded="true">
+        <MudNavLink Href="/accounts" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBalance">
+            Contas
+        </MudNavLink>
+        <MudNavLink Href="/transactions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SwapHoriz">
+            Transações
+        </MudNavLink>
+        <MudNavLink Href="/categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">
+            Categorias
+        </MudNavLink>
+        <MudNavLink Href="/budgets" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.TrendingDown">
+            Orçamentos
+        </MudNavLink>
+    </MudNavGroup>
+    
+    <MudNavGroup Title="Cartões de Crédito" Icon="@Icons.Material.Filled.CreditCard" Expanded="false">
+        <MudNavLink Href="/credit-cards" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CreditCard">
+            Meus Cartões
+        </MudNavLink>
+        <MudNavLink Href="/credit-card-statements" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Receipt">
+            Faturas
+        </MudNavLink>
+    </MudNavGroup>
+    
+    <MudNavGroup Title="Investimentos" Icon="@Icons.Material.Filled.TrendingUp" Expanded="false">
+        <MudNavLink Href="/investments" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Business">
+            Portfólio
+        </MudNavLink>
+        <MudNavLink Href="/investment-performance" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ShowChart">
+            Desempenho
+        </MudNavLink>
+    </MudNavGroup>
+    
+    <MudNavLink Href="/reports" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.BarChart">
+        Relatórios
+    </MudNavLink>
+    
+    <AuthorizeView>
+        <Authorized>
+            <MudNavLink Href="/profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">
+                Meu Perfil
+            </MudNavLink>
+            <MudNavLink Href="/settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
+                Configurações
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="accounts">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Accounts
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="transactions">
-                <span class="oi oi-transfer" aria-hidden="true"></span> Transactions
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="budgets">
-                <span class="oi oi-calculator" aria-hidden="true"></span> Budgets
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="investments">
-                <span class="oi oi-graph" aria-hidden="true"></span> Investments
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="reports">
-                <span class="oi oi-bar-chart" aria-hidden="true"></span> Reports
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
-@code {
-    private bool collapseNavMenu = true;
-
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}
+    <MudDivider Class="my-2" />
+    
+    <MudNavLink Href="/about" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Info">
+        Sobre
+    </MudNavLink>
+</MudNavMenu>

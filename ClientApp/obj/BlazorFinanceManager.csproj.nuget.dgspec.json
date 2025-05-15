@@ -8,7 +8,7 @@
       "version": "1.0.0",
       "restore": {
         "projectUniqueName": "/home/runner/workspace/ClientApp/BlazorFinanceManager.csproj",
-        "projectName": "BlazorFinanceManager",
+        "projectName": "FinanceManager.ClientApp",
         "projectPath": "/home/runner/workspace/ClientApp/BlazorFinanceManager.csproj",
         "packagesPath": "/home/runner/.nuget/packages/",
         "outputPath": "/home/runner/workspace/ClientApp/obj/",
@@ -45,39 +45,31 @@
           "dependencies": {
             "Blazored.LocalStorage": {
               "target": "Package",
-              "version": "[4.4.0, )"
-            },
-            "Fluxor": {
-              "target": "Package",
-              "version": "[5.9.1, )"
-            },
-            "Fluxor.Blazor.Web": {
-              "target": "Package",
-              "version": "[5.9.1, )"
-            },
-            "Fluxor.Blazor.Web.ReduxDevTools": {
-              "target": "Package",
-              "version": "[5.9.1, )"
+              "version": "[4.5.0, )"
             },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
-              "version": "[8.0.0, )"
+              "version": "[8.0.1, )"
             },
             "Microsoft.AspNetCore.Components.Authorization": {
               "target": "Package",
-              "version": "[8.0.0, )"
+              "version": "[8.0.1, )"
+            },
+            "Microsoft.AspNetCore.Components.Web": {
+              "target": "Package",
+              "version": "[8.0.1, )"
             },
             "MudBlazor": {
               "target": "Package",
-              "version": "[6.11.1, )"
-            },
-            "Newtonsoft.Json": {
-              "target": "Package",
-              "version": "[13.0.3, )"
+              "version": "[6.15.0, )"
             },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
-              "version": "[7.0.3, )"
+              "version": "[7.3.1, )"
+            },
+            "System.Net.Http.Json": {
+              "target": "Package",
+              "version": "[8.0.1, )"
             }
           },
           "imports": [

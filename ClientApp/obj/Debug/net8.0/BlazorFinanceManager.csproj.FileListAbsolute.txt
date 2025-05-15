@@ -6,3 +6,4 @@
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.MvcApplicationPartsAssemblyInfo.cache
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.RazorAssemblyInfo.cache
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.RazorAssemblyInfo.cs
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/FinanceManager.ClientApp.MvcApplicationPartsAssemblyInfo.cache

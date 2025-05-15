@@ -1,17 +1,89 @@
 @inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_currentTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="4">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">Gerenciador Financeiro</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Brightness4" Color="Color.Inherit" OnClick="@((e) => ToggleDarkMode())" />
+        <AuthorizeView>
+            <Authorized>
+                <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Direction="Direction.Bottom" OffsetY="true">
+                    <MudMenuItem OnClick="@(() => NavigateToProfile())">Meu Perfil</MudMenuItem>
+                    <MudMenuItem OnClick="@(() => LogoutAsync())">Sair</MudMenuItem>
+                </MudMenu>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Href="authentication/login" Color="Color.Inherit">Entrar</MudButton>
+                <MudButton Href="authentication/register" Color="Color.Inherit" Class="ml-2">Cadastrar</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudAppBar>
+    
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always">
         <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+    </MudDrawer>
+    
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="my-4 pt-4">
             @Body
-        </article>
-    </main>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private MudTheme _currentTheme = new MudTheme();
+    
+    protected override void OnInitialized()
+    {
+        _currentTheme = new MudTheme()
+        {
+            Palette = new PaletteLight()
+            {
+                Primary = "#1E88E5",
+                Secondary = "#00796B",
+                AppbarBackground = "#1E88E5",
+                Background = "#F5F5F5",
+                DrawerBackground = "#FFF",
+                DrawerText = "rgba(0,0,0, 0.8)",
+                Success = "#43A047"
+            },
+            PaletteDark = new PaletteDark()
+            {
+                Primary = "#1E88E5",
+                Secondary = "#00796B",
+                AppbarBackground = "#1E1E1E",
+                Background = "#121212",
+                DrawerBackground = "#1E1E1E",
+                DrawerText = "rgba(255,255,255, 0.8)",
+                Success = "#43A047"
+            }
+        };
+    }
+    
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+    
+    private void ToggleDarkMode()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+    
+    private void NavigateToProfile()
+    {
+        // Navegar para a página de perfil
+    }
+    
+    private async Task LogoutAsync()
+    {
+        // Implemente a lógica de logout
+    }
+}
