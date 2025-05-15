@@ -1,104 +1,120 @@
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 using FinanceManager.ClientApp.Models;
 using FinanceManager.ClientApp.Services.Interfaces;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace FinanceManager.ClientApp.Services
 {
     public class AccountService : IAccountService
     {
         private readonly HttpClient _httpClient;
+        private readonly string _apiEndpoint = "api/accounts";
+        private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public AccountService(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
 
-        public async Task<List<AccountViewModel>> GetAccountsAsync()
+        public async Task<List<AccountViewModel>> GetAccounts()
         {
             try
             {
-                var accounts = await _httpClient.GetFromJsonAsync<List<AccountViewModel>>("api/accounts");
-                return accounts ?? new List<AccountViewModel>();
+                var response = await _httpClient.GetAsync(_apiEndpoint);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<List<AccountViewModel>>(_jsonOptions) 
+                        ?? new List<AccountViewModel>();
+                }
+                
+                return new List<AccountViewModel>();
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
                 return new List<AccountViewModel>();
             }
         }
 
-        public async Task<AccountViewModel> GetAccountByIdAsync(int id)
+        public async Task<AccountViewModel> GetAccountById(string id)
         {
             try
             {
-                return await _httpClient.GetFromJsonAsync<AccountViewModel>($"api/accounts/{id}");
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/{id}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<AccountViewModel>(_jsonOptions) 
+                        ?? new AccountViewModel();
+                }
+                
+                return new AccountViewModel();
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
-                return null;
+                return new AccountViewModel();
             }
         }
 
-        public async Task<AccountViewModel> CreateAccountAsync(AccountCreateModel account)
+        public async Task<bool> CreateAccount(AccountCreateModel account)
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("api/accounts", account);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<AccountViewModel>();
-            }
-            catch (Exception)
-            {
-                // Em uma aplicação real, você deve registrar o erro
-                return null;
-            }
-        }
-
-        public async Task<AccountViewModel> UpdateAccountAsync(int id, AccountUpdateModel account)
-        {
-            try
-            {
-                var response = await _httpClient.PutAsJsonAsync($"api/accounts/{id}", account);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<AccountViewModel>();
-            }
-            catch (Exception)
-            {
-                // Em uma aplicação real, você deve registrar o erro
-                return null;
-            }
-        }
-
-        public async Task<bool> DeleteAccountAsync(int id)
-        {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"api/accounts/{id}");
+                var response = await _httpClient.PostAsJsonAsync(_apiEndpoint, account);
                 return response.IsSuccessStatusCode;
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
                 return false;
             }
         }
 
-        public async Task<List<AccountBalanceHistoryViewModel>> GetAccountBalanceHistoryAsync(int id, int months)
+        public async Task<bool> UpdateAccount(string id, AccountUpdateModel account)
         {
             try
             {
-                return await _httpClient.GetFromJsonAsync<List<AccountBalanceHistoryViewModel>>(
-                    $"api/accounts/{id}/balance-history?months={months}");
+                var response = await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/{id}", account);
+                return response.IsSuccessStatusCode;
             }
-            catch (Exception)
+            catch
             {
-                // Em uma aplicação real, você deve registrar o erro
-                return new List<AccountBalanceHistoryViewModel>();
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteAccount(string id)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"{_apiEndpoint}/{id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<decimal> GetTotalBalance()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/total-balance");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<decimal>(_jsonOptions);
+                    return result;
+                }
+                
+                return 0;
+            }
+            catch
+            {
+                return 0;
             }
         }
     }

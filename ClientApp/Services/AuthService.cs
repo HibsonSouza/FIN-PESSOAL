@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Blazored.LocalStorage;
+using FinanceManager.ClientApp.Models;
 using FinanceManager.ClientApp.Store;
 using Fluxor;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -9,8 +10,8 @@ namespace FinanceManager.ClientApp.Services
 {
     public interface IAuthService
     {
-        Task<AuthResult> LoginAsync(Login.LoginModel model);
-        Task<AuthResult> RegisterAsync(Register.RegisterModel model);
+        Task<AuthResult> LoginAsync(LoginModel model);
+        Task<AuthResult> RegisterAsync(RegisterModel model);
         Task<AuthResult> LogoutAsync();
         Task<AuthResult> ForgotPasswordAsync(string email);
         bool IsAuthenticated();
@@ -35,7 +36,7 @@ namespace FinanceManager.ClientApp.Services
             _dispatcher = dispatcher;
         }
 
-        public async Task<AuthResult> LoginAsync(Login.LoginModel model)
+        public async Task<AuthResult> LoginAsync(LoginModel model)
         {
             try
             {
@@ -65,7 +66,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<AuthResult> RegisterAsync(Register.RegisterModel model)
+        public async Task<AuthResult> RegisterAsync(RegisterModel model)
         {
             try
             {
