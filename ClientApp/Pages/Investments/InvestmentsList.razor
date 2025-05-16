@@ -329,14 +329,13 @@
     {
         return type switch
         {
-            InvestmentType.SAVINGS => "rgba(33, 150, 243, 1)",
-            InvestmentType.FIXED_INCOME => "rgba(76, 175, 80, 1)",
-            InvestmentType.STOCKS => "rgba(244, 67, 54, 1)",
-            InvestmentType.FUNDS => "rgba(156, 39, 176, 1)",
-            InvestmentType.REAL_ESTATE => "rgba(255, 152, 0, 1)",
-            InvestmentType.CRYPTO => "rgba(255, 87, 34, 1)",
-            InvestmentType.FOREX => "rgba(63, 81, 181, 1)",
-            InvestmentType.OTHER => "rgba(96, 125, 139, 1)",
+            InvestmentType.SavingsAccount => "rgba(33, 150, 243, 1)",
+            InvestmentType.FixedIncome => "rgba(76, 175, 80, 1)",
+            InvestmentType.Stock => "rgba(244, 67, 54, 1)",
+            InvestmentType.Fund => "rgba(156, 39, 176, 1)",
+            InvestmentType.RealEstate => "rgba(255, 152, 0, 1)",
+            InvestmentType.Cryptocurrency => "rgba(255, 87, 34, 1)",
+            InvestmentType.Other => "rgba(96, 125, 139, 1)",
             _ => "rgba(158, 158, 158, 1)"
         };
     }
@@ -401,7 +400,7 @@
     {
         try
         {
-            await InvestmentService.DeleteInvestmentAsync(investmentId);
+            await InvestmentService.DeleteInvestmentAsync(int.Parse(investmentId));
             Snackbar.Add("Investment deleted successfully", Severity.Success);
             await LoadInvestmentsAsync();
             await RenderChartsAsync();
@@ -469,12 +468,12 @@
 
                 if (_isEdit)
                 {
-                    await InvestmentService.UpdateInvestmentAsync(Investment.Id, _model);
+                    await InvestmentService.UpdateInvestmentAsync(Investment.Id, _model.ToUpdateModel());
                     Snackbar.Add("Investment updated successfully", Severity.Success);
                 }
                 else
                 {
-                    await InvestmentService.CreateInvestmentAsync(_model);
+                    await InvestmentService.CreateInvestmentAsync(_model.ToCreateModel());
                     Snackbar.Add("Investment created successfully", Severity.Success);
                 }
                 

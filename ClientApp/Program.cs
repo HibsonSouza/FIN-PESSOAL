@@ -1,5 +1,4 @@
 using Blazored.LocalStorage;
-using FinanceManager.ClientApp;
 using FinanceManager.ClientApp.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -7,8 +6,8 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor;
 using MudBlazor.Services;
 using System.Globalization;
-using FinanceManager.ClientApp.Components.Authentication;
 using FinanceManager.ClientApp.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -38,8 +37,9 @@ builder.Services.AddOptions();
 builder.Services.AddAuthorizationCore();
 
 // Registrar serviços de autenticação
-builder.Services.AddScoped<Store.CustomAuthStateProvider>();
-builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<Store.CustomAuthStateProvider>());
+builder.Services.AddScoped<FinanceManager.ClientApp.Components.Authentication.CustomAuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider => 
+    provider.GetRequiredService<FinanceManager.ClientApp.Components.Authentication.CustomAuthStateProvider>());
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 // Registrar serviço HTTP base

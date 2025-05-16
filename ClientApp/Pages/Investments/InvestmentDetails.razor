@@ -262,21 +262,21 @@ else
         if (transactions.Count == 0)
         {
             // Only initial and current value
-            var dates = new[] { _investment.AcquisitionDate, DateTime.Today };
-            var values = new[] { (double)_investment.InitialValue, (double)_investment.CurrentValue };
+            var simpleDates = new[] { _investment.AcquisitionDate, DateTime.Today };
+            var simpleValues = new[] { (double)_investment.InitialValue, (double)_investment.CurrentValue };
 
-            var config = new
+            var simpleConfig = new
             {
                 type = "line",
                 data = new
                 {
-                    labels = dates.Select(d => d.ToShortDateString()).ToArray(),
+                    labels = simpleDates.Select(d => d.ToShortDateString()).ToArray(),
                     datasets = new object[]
                     {
                         new
                         {
                             label = "Investment Value",
-                            data = values,
+                            data = simpleValues,
                             backgroundColor = "rgba(33, 150, 243, 0.2)",
                             borderColor = "rgba(33, 150, 243, 1)",
                             borderWidth = 2,
@@ -313,7 +313,7 @@ else
                 }
             };
 
-            await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _valueHistoryChartId, config);
+            await JSRuntime.InvokeVoidAsync("chartJsInterop.createChart", _valueHistoryChartId, simpleConfig);
             return;
         }
         
@@ -328,20 +328,20 @@ else
             // Only include value-changing transactions
             switch (transaction.Type)
             {
-                case InvestmentTransactionType.BUY:
-                case InvestmentTransactionType.CONTRIBUTION:
+                case InvestmentTransactionType.Buy:
+                case InvestmentTransactionType.Deposit:
                     currentValue += transaction.Amount;
                     break;
-                case InvestmentTransactionType.SELL:
-                case InvestmentTransactionType.WITHDRAWAL:
+                case InvestmentTransactionType.Sell:
+                case InvestmentTransactionType.Withdrawal:
                     currentValue -= transaction.Amount;
                     break;
-                case InvestmentTransactionType.DIVIDEND:
-                case InvestmentTransactionType.INTEREST:
+                case InvestmentTransactionType.Dividend:
+                case InvestmentTransactionType.Interest:
+                case InvestmentTransactionType.Income:
                     currentValue += transaction.Amount;
                     break;
-                case InvestmentTransactionType.TAX:
-                case InvestmentTransactionType.FEE:
+                case InvestmentTransactionType.Fee:
                     currentValue -= transaction.Amount;
                     break;
             }
@@ -548,7 +548,7 @@ else
             {
                 _model.InvestmentId = InvestmentId;
                 _model.Date = DateTime.Today;
-                _model.Type = InvestmentTransactionType.BUY;
+                _model.Type = InvestmentTransactionType.Buy;
             }
         }
 
@@ -571,8 +571,28 @@ else
                 }
                 else
                 {
-                    await InvestmentService.AddInvestmentTransactionAsync(_model);
-                    Snackbar.Add("Transaction added successfully", Severity.Success);
+                    var investmentIdParsed = int.TryParse(InvestmentId, out var id) ? id : 0;
+                    if (investmentIdParsed > 0)
+                    {
+                        // Convertemos o model para um objeto esperado pelo método existente
+                        var transaction = new InvestmentTransactionViewModel
+                        {
+                            InvestmentId = InvestmentId,
+                            Date = _model.Date,
+                            Type = _model.Type,
+                            Amount = _model.Amount,
+                            Quantity = _model.Quantity,
+                            Price = _model.Price,
+                            Notes = _model.Notes
+                        };
+                        
+                        await InvestmentService.AddInvestmentTransactionAsync(investmentIdParsed, transaction);
+                        Snackbar.Add("Transaction added successfully", Severity.Success);
+                    }
+                    else
+                    {
+                        Snackbar.Add("Invalid investment ID", Severity.Error);
+                    }
                 }
                 
                 MudDialog.Close(DialogResult.Ok(true));

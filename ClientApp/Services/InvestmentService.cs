@@ -31,7 +31,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<InvestmentViewModel> GetInvestmentByIdAsync(int id)
+        public async Task<InvestmentViewModel> GetInvestmentByIdAsync(string id)
         {
             try
             {
@@ -174,6 +174,20 @@ namespace FinanceManager.ClientApp.Services
             {
                 // Em uma aplicação real, você deve registrar o erro
                 return null;
+            }
+        }
+        
+        public async Task<bool> DeleteInvestmentTransactionAsync(string transactionId)
+        {
+            try
+            {
+                var response = await _httpClient.DeleteAsync($"api/investment-transactions/{transactionId}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception)
+            {
+                // Em uma aplicação real, você deve registrar o erro
+                return false;
             }
         }
     }

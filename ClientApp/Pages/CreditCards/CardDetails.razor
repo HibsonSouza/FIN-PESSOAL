@@ -246,7 +246,7 @@ else
                             <MudText Typo="Typo.h6">Recent Transactions</MudText>
                             <MudDateRangePicker 
                                 DateRange="new DateRange(){ Start = _dateRange.Start, End = _dateRange.End }"
-                                DateRangeChanged="(range) => { _dateRange = new DateTimeRange(range.Start!.Value, range.End!.Value); LoadTransactions(); }"
+                                DateRangeChanged="async (range) => { _dateRange = new DateTimeRange(range.Start!.Value, range.End!.Value); await LoadTransactionsAsync(); }"
                                 Label="Date Range" 
                                 Variant="Variant.Outlined" 
                                 AdornmentColor="Color.Primary"

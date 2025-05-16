@@ -38,10 +38,28 @@ namespace FinanceManager.ClientApp.Models
         
         public string? Notes { get; set; }
         
+        // Ícone do cartão (baseado no banco)
+        public string IconName => GetIconNameForBank(Bank);
+        
         // Instalamentos ativos
         public List<CreditCardTransactionViewModel> ActiveInstallments { get; set; } = new List<CreditCardTransactionViewModel>();
         
         public List<CreditCardBillViewModel> RecentBills { get; set; } = new List<CreditCardBillViewModel>();
+        
+        // Método para obter o ícone baseado no banco
+        private string GetIconNameForBank(string bankName)
+        {
+            return bankName.ToLower() switch
+            {
+                "nubank" => "fab fa-n",
+                "itaú" or "itau" => "fas fa-university",
+                "bradesco" => "fas fa-landmark",
+                "santander" => "fas fa-piggy-bank",
+                "banco do brasil" or "bb" => "fas fa-university",
+                "caixa" => "fas fa-building",
+                _ => "fas fa-credit-card"
+            };
+        }
     }
     
     // Formulário para criação e edição
@@ -176,6 +194,11 @@ namespace FinanceManager.ClientApp.Models
         public int InstallmentNumber { get; set; }
         
         public int TotalInstallments { get; set; }
+        
+        // Propriedades adicionais necessárias
+        public int CurrentInstallment { get => InstallmentNumber; }
+        
+        public decimal InstallmentAmount { get => Amount / TotalInstallments; }
     }
     
     public class CreditCardTransactionCreateModel

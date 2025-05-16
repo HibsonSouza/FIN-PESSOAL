@@ -6,21 +6,32 @@ namespace FinanceManager.ClientApp.Models
     public class InvestmentViewModel
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public InvestmentType Type { get; set; }
         public InvestmentRiskLevel RiskLevel { get; set; }
         public decimal InitialValue { get; set; }
         public decimal CurrentValue { get; set; }
         public decimal Profitability { get; set; }  // Em percentual
         public decimal PerformancePercentage => (CurrentValue - InitialValue) / InitialValue * 100;
-        public string Institution { get; set; }
+        public string Institution { get; set; } = string.Empty;
         public DateTime StartDate { get; set; }
         public DateTime? MaturityDate { get; set; }
-        public string Icon { get; set; }
-        public string Color { get; set; }
+        public string Icon { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public List<InvestmentTransactionViewModel> Transactions { get; set; } = new List<InvestmentTransactionViewModel>();
+        
+        // Propriedades adicionais necessárias
+        public string Notes { get; set; } = string.Empty;
+        public InvestmentRiskLevel Risk => RiskLevel;
+        public int? LiquidityDays { get; set; }
+        
+        // Propriedade adicional para compatibilidade com InvestmentDetails.razor
+        public DateTime AcquisitionDate { get => StartDate; set => StartDate = value; }
+        
+        // Propriedade para cálculo de ganho/perda
+        public decimal GainLoss => CurrentValue - InitialValue;
     }
 
     public enum InvestmentType
@@ -32,6 +43,24 @@ namespace FinanceManager.ClientApp.Models
         RealEstate,
         Cryptocurrency,
         Other
+    }
+    
+    public static class InvestmentTypeExtensions
+    {
+        public static string ToDisplayString(this InvestmentType type)
+        {
+            return type switch
+            {
+                InvestmentType.SavingsAccount => "Poupança",
+                InvestmentType.FixedIncome => "Renda Fixa",
+                InvestmentType.Stock => "Ações",
+                InvestmentType.Fund => "Fundos",
+                InvestmentType.RealEstate => "Imóveis",
+                InvestmentType.Cryptocurrency => "Criptomoedas",
+                InvestmentType.Other => "Outros",
+                _ => "Desconhecido"
+            };
+        }
     }
 
     public enum InvestmentRiskLevel
@@ -77,16 +106,24 @@ namespace FinanceManager.ClientApp.Models
 
     public class InvestmentTransactionViewModel
     {
-        public int Id { get; set; }
-        public int InvestmentId { get; set; }
-        public string InvestmentName { get; set; }
+        public string Id { get; set; } = string.Empty;
+        public string InvestmentId { get; set; } = string.Empty;
+        public string InvestmentName { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         public InvestmentTransactionType Type { get; set; }
         public decimal Amount { get; set; }
-        public decimal UnitPrice { get; set; }
+        public decimal Price { get; set; } // Preço por unidade
         public decimal Quantity { get; set; }
-        public string Description { get; set; }
+        public decimal Taxes { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public string Notes { get; set; } = string.Empty;
         public decimal BalanceAfterTransaction { get; set; }
+        
+        // Alias para compatibilidade
+        public decimal UnitPrice { 
+            get => Price; 
+            set => Price = value; 
+        }
     }
 
     public enum InvestmentTransactionType

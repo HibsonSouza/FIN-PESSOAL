@@ -60,7 +60,7 @@ namespace FinanceManager.ClientApp.Models
     {
         [Required(ErrorMessage = "Digite um nome")]
         [StringLength(100, ErrorMessage = "O nome não pode ter mais de 100 caracteres")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Selecione um tipo")]
         public InvestmentType Type { get; set; }
@@ -80,7 +80,53 @@ namespace FinanceManager.ClientApp.Models
         
         public decimal ReturnRate { get; set; }
         
-        public string Notes { get; set; }
+        public string Notes { get; set; } = string.Empty;
+        
+        // Propriedades adicionais
+        public bool IsActive { get; set; } = true;
+        public DateTime AcquisitionDate { get; set; } = DateTime.Today;
+        public int? LiquidityDays { get; set; }
+        public DateTime? MaturityDate { get; set; }
+        
+        // Propriedades necessárias para o formulário
+        public decimal Profitability { get => ReturnRate; set => ReturnRate = value; }
+        public InvestmentRiskLevel Risk { get; set; } = InvestmentRiskLevel.Medium;
+        public string Institution { get; set; } = string.Empty;
+        
+        // Compatibilidade para campos correspondentes
+        public decimal InitialValue { get => InitialAmount; set => InitialAmount = value; }
+        
+        // Métodos para conversão
+        public InvestmentCreateModel ToCreateModel()
+        {
+            return new InvestmentCreateModel
+            {
+                Name = this.Name,
+                Description = this.Notes,
+                Type = this.Type,
+                RiskLevel = InvestmentRiskLevel.Medium,
+                InitialValue = this.InitialAmount,
+                CurrentValue = this.CurrentValue,
+                Profitability = this.ReturnRate,
+                Institution = string.Empty,
+                StartDate = this.AcquisitionDate,
+                MaturityDate = this.MaturityDate,
+                Icon = string.Empty,
+                Color = string.Empty
+            };
+        }
+        
+        public InvestmentUpdateModel ToUpdateModel()
+        {
+            return new InvestmentUpdateModel
+            {
+                Name = this.Name,
+                Description = this.Notes,
+                CurrentValue = this.CurrentValue,
+                Profitability = this.ReturnRate,
+                IsActive = this.IsActive
+            };
+        }
     }
     
     public class InvestmentTransactionFormModel
