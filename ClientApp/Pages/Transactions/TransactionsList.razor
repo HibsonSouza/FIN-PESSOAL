@@ -220,7 +220,7 @@
                             <MudTd DataLabel="Account">@context.AccountName</MudTd>
                             <MudTd DataLabel="Amount" Style="text-align: right">
                                 <MudText Class="@GetAmountColor(context.Type)">
-                                    @(context.Type == TransactionType.EXPENSE ? "-" : "")@FormatCurrency(Math.Abs(context.Amount))
+                                    @(context.Type == TransactionType.Expense ? "-" : "")@FormatCurrency(Math.Abs(context.Amount))
                                 </MudText>
                             </MudTd>
                             <MudTd DataLabel="Status">
@@ -353,7 +353,7 @@
 
     private string GetAmountColor(TransactionType type)
     {
-        return type == TransactionType.EXPENSE ? "currency-negative" : "currency-positive";
+        return type == TransactionType.Expense ? "currency-negative" : "currency-positive";
     }
 
     private Color GetCategoryColor(TransactionType type)
@@ -361,7 +361,7 @@
         return type switch
         {
             TransactionType.INCOME => Color.Success,
-            TransactionType.EXPENSE => Color.Error,
+            TransactionType.Expense => Color.Error,
             TransactionType.TRANSFER => Color.Info,
             TransactionType.INVESTMENT => Color.Secondary,
             _ => Color.Default

@@ -321,7 +321,7 @@
     {
         var parameters = new DialogParameters
         {
-            { "Categories", _categories.Where(c => c.Type == TransactionType.EXPENSE).ToList() }
+            { "Categories", _categories.Where(c => c.Type == TransactionType.Expense).ToList() }
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
@@ -340,7 +340,7 @@
         var parameters = new DialogParameters
         {
             { "Budget", budget },
-            { "Categories", _categories.Where(c => c.Type == TransactionType.EXPENSE).ToList() }
+            { "Categories", _categories.Where(c => c.Type == TransactionType.Expense).ToList() }
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };

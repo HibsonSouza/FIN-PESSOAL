@@ -142,7 +142,7 @@
                             </MudSelect>
                         </MudItem>
 
-                        @if (_model.Type == TransactionType.EXPENSE)
+                        @if (_model.Type == TransactionType.Expense)
                         {
                             <MudItem xs="12" md="6">
                                 <MudSelect 
@@ -162,7 +162,7 @@
                         }
                     }
 
-                    @if (_model.Type == TransactionType.EXPENSE && !string.IsNullOrEmpty(_model.CreditCardId))
+                    @if (_model.Type == TransactionType.Expense && !string.IsNullOrEmpty(_model.CreditCardId))
                     {
                         <MudItem xs="12" md="6">
                             <MudCheckBox 
@@ -319,7 +319,7 @@
             {
                 // Set defaults for new transaction
                 _model.Date = DateTime.Today;
-                _model.Type = TransactionType.EXPENSE;
+                _model.Type = TransactionType.Expense;
                 
                 // If an account was specified (e.g. from account details), select it
                 if (!string.IsNullOrEmpty(AccountId))

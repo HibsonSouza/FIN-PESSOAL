@@ -4,3 +4,4 @@
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.AssemblyInfo.cs
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.csproj.CoreCompileInputs.cache
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.MvcApplicationPartsAssemblyInfo.cache
+/home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.sourcelink.json

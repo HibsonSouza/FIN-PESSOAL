@@ -177,7 +177,7 @@ else
                                     </MudTd>
                                     <MudTd DataLabel="Amount">
                                         <MudText Class="@GetAmountColor(context.Type)">
-                                            @(context.Type == TransactionType.EXPENSE ? "-" : "")@FormatCurrency(Math.Abs(context.Amount))
+                                            @(context.Type == TransactionType.Expense ? "-" : "")@FormatCurrency(Math.Abs(context.Amount))
                                         </MudText>
                                     </MudTd>
                                     <MudTd>
@@ -283,7 +283,7 @@ else
 
     private string GetAmountColor(TransactionType type)
     {
-        return type == TransactionType.EXPENSE ? "currency-negative" : "currency-positive";
+        return type == TransactionType.Expense ? "currency-negative" : "currency-positive";
     }
 
     private Color GetCategoryColor(TransactionType type)
@@ -291,7 +291,7 @@ else
         return type switch
         {
             TransactionType.INCOME => Color.Success,
-            TransactionType.EXPENSE => Color.Error,
+            TransactionType.Expense => Color.Error,
             TransactionType.TRANSFER => Color.Info,
             _ => Color.Default
         };
@@ -375,7 +375,7 @@ else
     {
         // Group transactions by date and calculate running balance
         var sortedTransactions = _transactions.OrderBy(t => t.Date).ToList();
-        var startBalance = _account.Balance - sortedTransactions.Sum(t => t.Type == TransactionType.EXPENSE ? -t.Amount : t.Amount);
+        var startBalance = _account.Balance - sortedTransactions.Sum(t => t.Type == TransactionType.Expense ? -t.Amount : t.Amount);
 
         var balanceData = new List<decimal> { startBalance };
         var dateLabels = new List<string> { sortedTransactions.Count > 0 ? sortedTransactions.Min(t => t.Date).AddDays(-1).ToShortDateString() : DateTime.Now.AddMonths(-1).ToShortDateString() };
@@ -387,7 +387,7 @@ else
         {
             foreach (var transaction in group)
             {
-                runningBalance += transaction.Type == TransactionType.EXPENSE ? -transaction.Amount : transaction.Amount;
+                runningBalance += transaction.Type == TransactionType.Expense ? -transaction.Amount : transaction.Amount;
             }
             balanceData.Add(runningBalance);
             dateLabels.Add(group.Key.ToShortDateString());
