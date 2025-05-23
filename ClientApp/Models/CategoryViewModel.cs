@@ -50,10 +50,8 @@ namespace FinanceManager.ClientApp.Models
         
         public string? Icon { get; set; }
         
-        public string? ParentCategoryId { get; set; }
-    }
-    
-    public class CategorySummaryModel
+        public string? ParentCategoryId { get; set; }    }
+      public class CategoryStatisticsModel
     {
         public string CategoryId { get; set; } = string.Empty;
         
@@ -67,6 +65,6 @@ namespace FinanceManager.ClientApp.Models
         
         public decimal TotalAmount { get; set; }
         
-        public decimal Percentage { get; set; }
+        public double Percentage { get; set; }
     }
 }

@@ -96,9 +96,7 @@ namespace FinanceManager.ClientApp.Services
             {
                 return false;
             }
-        }
-
-        public async Task<List<CategorySummaryModel>> GetCategorySummary(DateTimeRange dateRange)
+        }        public async Task<List<CategorySummary>> GetCategorySummary(DateTimeRange dateRange)
         {
             try
             {
@@ -107,15 +105,15 @@ namespace FinanceManager.ClientApp.Services
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<CategorySummaryModel>>(_jsonOptions) 
-                        ?? new List<CategorySummaryModel>();
+                    return await response.Content.ReadFromJsonAsync<List<CategorySummary>>(_jsonOptions) 
+                        ?? new List<CategorySummary>();
                 }
                 
-                return new List<CategorySummaryModel>();
+                return new List<CategorySummary>();
             }
             catch
             {
-                return new List<CategorySummaryModel>();
+                return new List<CategorySummary>();
             }
         }
     }

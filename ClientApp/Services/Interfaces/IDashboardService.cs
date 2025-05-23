@@ -2,16 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FinanceManager.ClientApp.Models;
+using MudBlazor;
 
 namespace FinanceManager.ClientApp.Services.Interfaces
 {
     public interface IDashboardService
     {
-        Task<decimal> GetTotalBalance();
-        Task<decimal> GetMonthlyIncome();
-        Task<decimal> GetMonthlyExpenses();
-        Task<IEnumerable<ChartData>> GetCategoryExpenses(DateTimeRange dateRange);
-        Task<IEnumerable<ChartData>> GetMonthlyBalanceHistory(int numberOfMonths = 6);
-        Task<IEnumerable<ChartData>> GetSavingsGoalsProgress();
+        Task<DashboardViewModel?> GetDashboardDataAsync(FinanceManager.ClientApp.Models.DateTimeRange dateRange);
+        Task<decimal> GetTotalBalanceAsync(); 
+        Task<decimal> GetMonthlyIncomeAsync(); 
+        Task<decimal> GetMonthlyExpensesAsync(); 
+        Task<IEnumerable<CategorySummaryViewModel>> GetExpensesByCategoryAsync(FinanceManager.ClientApp.Models.DateTimeRange dateRange); 
+        Task<IEnumerable<BalanceForecastViewModel>> GetCashFlowAsync(FinanceManager.ClientApp.Models.DateTimeRange dateRange); 
+        Task<IEnumerable<SavingsGoalProgress>> GetSavingsGoalsProgressAsync(); // Corrigido para SavingsGoalProgress
+        Task<List<BudgetProgressViewModel>> GetBudgetProgressAsync(); 
     }
 }

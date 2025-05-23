@@ -1,14 +1,14 @@
 using FinanceManager.ClientApp.Models;
 
 namespace FinanceManager.ClientApp.Services.Interfaces
-{
-    public interface IAccountService
+{    public interface IAccountService
     {
-        Task<List<AccountViewModel>> GetAccounts();
-        Task<AccountViewModel> GetAccountById(string id);
-        Task<bool> CreateAccount(AccountCreateModel account);
-        Task<bool> UpdateAccount(string id, AccountUpdateModel account);
-        Task<bool> DeleteAccount(string id);
-        Task<decimal> GetTotalBalance();
+        Task<IEnumerable<AccountViewModel>> GetAccountsAsync();
+        Task<AccountViewModel> GetAccountByIdAsync(string id);
+        Task<AccountViewModel> CreateAccountAsync(AccountFormModel model);
+        Task<AccountViewModel> UpdateAccountAsync(AccountFormModel model);
+        Task<bool> DeleteAccountAsync(string id);
+        Task<IEnumerable<TransactionViewModel>> GetAccountTransactionsAsync(string accountId);
+        Task<decimal> GetTotalBalanceAsync();
     }
 }

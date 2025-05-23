@@ -31,6 +31,13 @@ namespace FinanceManager.ClientApp.Models
         public string? Color { get; set; }
         
         public string? Notes { get; set; }
+        
+        // Propriedades adicionais
+        public decimal CurrentSpent { get; set; }
+        
+        public string? CategoryColor { get; set; }
+        
+        public string? CategoryIconName { get; set; }
     }
     
     public class BudgetCreateModel

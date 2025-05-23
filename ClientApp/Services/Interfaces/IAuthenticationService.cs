@@ -4,10 +4,10 @@ namespace FinanceManager.ClientApp.Services.Interfaces
 {
     public interface IAuthenticationService
     {
-        Task<AuthResult> Login(string email, string password);
-        Task<AuthResult> Register(string name, string email, string password, string confirmPassword);
-        Task<bool> Logout();
-        Task<AuthResult> RefreshToken();
+        Task<FinanceManager.ClientApp.Models.AuthResult> Login(string email, string password);
+        Task<FinanceManager.ClientApp.Models.AuthResult> Register(string name, string email, string password, string confirmPassword);
+        Task Logout();
+        Task<FinanceManager.ClientApp.Models.AuthResult> RefreshToken();
         Task<bool> CheckIsAuthenticated();
     }
 }

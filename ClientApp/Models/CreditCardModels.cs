@@ -72,6 +72,8 @@ namespace FinanceManager.ClientApp.Models
         [Required(ErrorMessage = "Nome do banco é obrigatório")]
         [StringLength(100, ErrorMessage = "Nome do banco não pode exceder 100 caracteres")]
         public string Bank { get; set; } = string.Empty;
+
+        public string? IconName { get; set; } // Adicionado IconName
         
         [Required(ErrorMessage = "Últimos 4 dígitos são obrigatórios")]
         [StringLength(4, MinimumLength = 4, ErrorMessage = "Informe os 4 últimos dígitos do cartão")]

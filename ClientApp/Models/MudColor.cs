@@ -8,6 +8,9 @@ namespace MudBlazor
         }
 
         public string HexColor { get; private set; }
+        
+        // Propriedade Value para compatibilidade com o MudBlazor.Utilities.MudColor
+        public string Value => HexColor;
 
         public static implicit operator string(MudColor color) => color.HexColor;
         public static implicit operator MudColor(string color) => new MudColor(color);

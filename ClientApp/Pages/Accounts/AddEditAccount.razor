@@ -5,6 +5,7 @@
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 @using MudBlazor
+@using FinanceManager.ClientApp.Models
 
 <PageTitle>@(_isEditing ? "Edit Account" : "Add Account") - Finance Manager</PageTitle>
 
@@ -98,31 +99,23 @@
                     </MudItem>
 
                     <MudItem xs="12" md="6">
-                        <MudTextField 
-                            @bind-Value="_model.IconName" 
+                        <MudTextField                            @bind-Value="_model.IconName" 
                             Label="Icon" 
                             Variant="Variant.Outlined"
                             Adornment="Adornment.Start"
                             AdornmentIcon="@_model.IconName"
                             ReadOnly="true"
                             Class="mb-4"
-                            OnClick="@OpenIconPicker" />
-                    </MudItem>
-
-                    <MudItem xs="12" md="6">
-                        <MudColorPicker 
-                            @bind-Value="_colorValue"
+                            OnClick="@(() => OpenIconPicker())" />
+                    </MudItem>                    <MudItem xs="12" md="6">
+                        <MudTextField 
+                            @bind-Value="_model.Color" 
                             Label="Color" 
                             Variant="Variant.Outlined"
-                            DisableToolbar="true"
-                            DisablePreview="true"
-                            DisableModeSwitch="true"
                             Class="mb-4" />
-                    </MudItem>
-
-                    <MudItem xs="12" md="6">
+                    </MudItem><MudItem xs="12" md="6">
                         <MudCheckBox 
-                            @bind-Checked="_model.IsActive"
+                            @bind-Value="_model.IsActive"
                             Label="Active"
                             Color="Color.Primary" 
                             Class="mb-4" />
@@ -130,7 +123,7 @@
 
                     <MudItem xs="12" md="6">
                         <MudCheckBox 
-                            @bind-Checked="_model.IncludeInTotal"
+                            @bind-Value="_model.IncludeInTotal"
                             Label="Include in Total Balance"
                             Color="Color.Primary" 
                             Class="mb-4" />
@@ -174,11 +167,10 @@
         <MudGrid>
             @foreach (var icon in _availableIcons)
             {
-                <MudItem xs="3" sm="2">
-                    <MudPaper 
+                <MudItem xs="3" sm="2">                        <MudPaper 
                         Elevation="2" 
                         Class="pa-4 d-flex justify-center cursor-pointer" 
-                        Style="@($"background-color: {(_model.IconName == icon ? _colorValue : "transparent")}")"
+                        Style="@($"background-color: {(_model.IconName == icon ? _model.Color : "transparent")}")"
                         @onclick="() => SelectIcon(icon)">
                         <MudIcon Icon="@icon" Size="Size.Large" Color="@(_model.IconName == icon ? Color.Surface : Color.Primary)" />
                     </MudPaper>
@@ -191,18 +183,16 @@
     </DialogActions>
 </MudDialog>
 
-@code {
-    [Parameter]
-    public string Id { get; set; }
+@code {    [Parameter]
+    public string? Id { get; set; }
 
     private bool _isEditing => !string.IsNullOrEmpty(Id);
     private bool _isLoading = true;
     private bool _isBusy = false;
-    private bool _isValid = false;
-    private bool _isIconPickerOpen = false;
+    private bool _isValid = false;    private bool _isIconPickerOpen = false;
     private string[] _errors = { };
-    private MudForm _form;
-    private AccountCreateModel _model = new();
+    private MudForm _form = null!;
+    private AccountFormModel _model = new();
     private MudColor _colorValue = new("#1976d2");
 
     private readonly string[] _availableIcons = new[]
@@ -223,31 +213,29 @@
         Icons.Material.Filled.Storefront,
         Icons.Material.Filled.PriceCheck,
         Icons.Material.Filled.Paid
-    };
-
-    protected override async Task OnInitializedAsync()
+    };    protected override async Task OnInitializedAsync()
     {
         try
         {
             _isLoading = true;
 
-            if (_isEditing)
+            if (_isEditing && !string.IsNullOrEmpty(Id))
             {
                 var account = await AccountService.GetAccountByIdAsync(Id);
                 _model = new AccountFormModel
                 {
+                    Id = account.Id,
                     Name = account.Name,
-                    Type = account.Type,
+                    Type = Enum.TryParse<AccountType>(account.Type, true, out var type) ? type : AccountType.Checking,
                     Balance = account.Balance,
-                    Institution = account.Institution,
-                    AccountNumber = account.AccountNumber,
-                    Agency = account.Agency,
+                    Institution = account.Institution ?? string.Empty,
+                    AccountNumber = account.AccountNumber ?? string.Empty,
+                    Agency = account.Agency ?? string.Empty,
                     IsActive = account.IsActive,
-                    IconName = account.IconName,
-                    Color = account.Color,
+                    IconName = account.IconName ?? Icons.Material.Filled.AccountBalance,
+                    Color = account.Color ?? "#1976d2",
                     IncludeInTotal = account.IncludeInTotal
                 };
-                _colorValue = new MudColor(account.Color);
             }
             else
             {
@@ -266,18 +254,16 @@
         {
             _isLoading = false;
         }
-    }
-
-    private async Task SubmitForm()
+    }    private async Task SubmitForm()
     {
         try
         {
             _isBusy = true;
-            _model.Color = _colorValue.Value;
 
-            if (_isEditing)
+            if (_isEditing && !string.IsNullOrEmpty(Id))
             {
-                await AccountService.UpdateAccountAsync(Id, _model);
+                _model.Id = Id;
+                await AccountService.UpdateAccountAsync(_model);
                 Snackbar.Add("Account updated successfully", Severity.Success);
             }
             else

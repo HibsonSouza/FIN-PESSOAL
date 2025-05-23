@@ -21,6 +21,19 @@ namespace FinanceManager.ClientApp.Models
         public string? Description { get; set; }
         
         public List<TransactionViewModel> RecentTransactions { get; set; } = new();
+        
+        // Propriedades adicionais
+        public string? AccountNumber { get; set; }
+        
+        public string? Agency { get; set; }
+        
+        public string? Institution { get; set; }
+        
+        public string? IconName { get; set; }
+        
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        
+        public bool IncludeInTotal { get; set; } = true;
     }
     
     public class AccountCreateModel
@@ -44,6 +57,19 @@ namespace FinanceManager.ClientApp.Models
         public string? Color { get; set; }
         
         public string? Description { get; set; }
+        
+        // Propriedades adicionais
+        public string? AccountNumber { get; set; }
+        
+        public string? Agency { get; set; }
+        
+        public string? Institution { get; set; }
+        
+        public string? IconName { get; set; }
+        
+        public bool IncludeInTotal { get; set; } = true;
+        
+        public decimal Balance { get; set; }
     }
     
     public class AccountUpdateModel

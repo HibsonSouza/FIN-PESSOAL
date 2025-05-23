@@ -18,9 +18,7 @@ namespace FinanceManager.ClientApp.Services
         public TransactionService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-        }
-
-        public async Task<List<TransactionViewModel>> GetTransactions()
+        }        public async Task<List<TransactionViewModel>> GetTransactionsAsync() // Renomeado e tipo de retorno atualizado
         {
             try
             {
@@ -38,9 +36,9 @@ namespace FinanceManager.ClientApp.Services
             {
                 return new List<TransactionViewModel>();
             }
-        }
+        }        
 
-        public async Task<List<TransactionViewModel>> GetTransactionsByDateRange(DateTimeRange dateRange)
+        public async Task<List<TransactionViewModel>> GetTransactionsByDateRange(DateTimeRange dateRange) // Renomeado
         {
             try
             {
@@ -59,9 +57,7 @@ namespace FinanceManager.ClientApp.Services
             {
                 return new List<TransactionViewModel>();
             }
-        }
-
-        public async Task<List<TransactionViewModel>> GetRecentTransactions(int count)
+        }        public async Task<List<TransactionViewModel>> GetRecentTransactions(int count) // Renomeado
         {
             try
             {
@@ -81,7 +77,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<TransactionViewModel> GetTransactionById(string id)
+        public async Task<TransactionViewModel?> GetTransactionByIdAsync(string id) // Renomeado e tipo de retorno atualizado para nullable
         {
             try
             {
@@ -89,45 +85,111 @@ namespace FinanceManager.ClientApp.Services
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<TransactionViewModel>(_jsonOptions) 
-                        ?? new TransactionViewModel();
+                    return await response.Content.ReadFromJsonAsync<TransactionViewModel>(_jsonOptions);
                 }
                 
-                return new TransactionViewModel();
+                return null; // Retorna null se não for bem-sucedido ou não encontrado
             }
             catch
             {
-                return new TransactionViewModel();
+                return null; // Retorna null em caso de exceção
             }
-        }
-
-        public async Task<bool> CreateTransaction(TransactionCreateModel transaction)
+        }        public async Task<TransactionViewModel?> CreateTransactionAsync(TransactionCreateModel transaction) // Renomeado e tipo de retorno atualizado para nullable
         {
             try
             {
                 var response = await _httpClient.PostAsJsonAsync(_apiEndpoint, transaction);
-                return response.IsSuccessStatusCode;
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<TransactionViewModel>(_jsonOptions);
+                }
+                return null;
             }
             catch
             {
-                return false;
+                return null;
             }
         }
 
-        public async Task<bool> UpdateTransaction(string id, TransactionUpdateModel transaction)
+        public async Task<TransactionViewModel?> CreateTransactionAsync(TransactionFormModel transaction)
+        {
+            try
+            {
+                // Converter do modelo de formulário para o modelo de criação
+                var createModel = new TransactionCreateModel
+                {
+                    Description = transaction.Description,
+                    Amount = transaction.Amount,
+                    Date = transaction.Date,
+                    Type = transaction.Type,
+                    AccountId = transaction.AccountId ?? string.Empty,
+                    CategoryId = transaction.CategoryId,
+                    ToAccountId = transaction.ToAccountId,
+                    IsRecurring = transaction.IsRecurring,
+                    RecurrencePattern = transaction.RecurrencePattern,
+                    EndDate = transaction.EndDate,
+                    IsPending = transaction.IsPending,
+                    Notes = transaction.Notes,
+                    TagIds = transaction.TagIds?.ToList() ?? new List<string>()
+                };
+                
+                return await CreateTransactionAsync(createModel);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<TransactionViewModel?> UpdateTransactionAsync(string id, TransactionUpdateModel transaction)
         {
             try
             {
                 var response = await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/{id}", transaction);
-                return response.IsSuccessStatusCode;
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<TransactionViewModel>(_jsonOptions);
+                }
+                return null;
             }
             catch
             {
-                return false;
+                return null;
             }
         }
 
-        public async Task<bool> DeleteTransaction(string id)
+    public async Task<TransactionViewModel?> UpdateTransactionAsync(string id, TransactionFormModel transaction)
+    {
+        try
+        {
+            // Converter do modelo de formulário para o modelo de atualização
+            var updateModel = new TransactionUpdateModel
+            {
+                Description = transaction.Description,
+                Amount = transaction.Amount,
+                Date = transaction.Date,
+                Type = transaction.Type,
+                AccountId = transaction.AccountId ?? string.Empty,
+                CategoryId = transaction.CategoryId,
+                ToAccountId = transaction.ToAccountId,
+                IsPending = transaction.IsPending,
+                Notes = transaction.Notes,
+                TagIds = transaction.TagIds?.ToList() ?? new List<string>(),
+                UpdateRecurringSeries = transaction.IsRecurring, // Usar IsRecurring como indicador de atualização da série recorrente
+                Location = transaction.Location,
+                IsReconciled = transaction.IsReconciled,
+                CreditCardId = transaction.CreditCardId
+            };
+            
+            return await UpdateTransactionAsync(id, updateModel);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+        public async Task<bool> DeleteTransactionAsync(string id) // Mantido, já estava correto
         {
             try
             {
@@ -139,89 +201,55 @@ namespace FinanceManager.ClientApp.Services
                 return false;
             }
         }
-        
-        public async Task<bool> DeleteTransactionAsync(string id)
-        {
-            // Este método é equivalente ao DeleteTransaction, mas mantido para compatibilidade com o componente
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"{_apiEndpoint}/{id}");
-                return response.IsSuccessStatusCode;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        
-        public async Task<List<TransactionViewModel>> GetTransactionsAsync(TransactionFilterModel filter)
+          // Método para buscar transações com filtro, conforme a interface
+        public async Task<List<TransactionViewModel>> GetFilteredTransactionsAsync(TransactionFilterModel filter)
         {
             try
             {
-                var queryParams = new List<string>();
-                
-                if (filter.Type.HasValue)
-                {
-                    queryParams.Add($"type={filter.Type.Value}");
-                }
-                
-                if (!string.IsNullOrEmpty(filter.CategoryId))
-                {
-                    queryParams.Add($"categoryId={filter.CategoryId}");
-                }
-                
-                if (!string.IsNullOrEmpty(filter.AccountId))
-                {
-                    queryParams.Add($"accountId={filter.AccountId}");
-                }
-                
-                if (!string.IsNullOrEmpty(filter.CreditCardId))
-                {
-                    queryParams.Add($"creditCardId={filter.CreditCardId}");
-                }
-                
+                // Constrói a query string dinamicamente
+                var queryBuilder = new StringBuilder($"{_apiEndpoint}/filter?");
                 if (filter.StartDate.HasValue)
-                {
-                    queryParams.Add($"startDate={filter.StartDate.Value:yyyy-MM-dd}");
-                }
-                
+                    queryBuilder.Append($"StartDate={filter.StartDate.Value:yyyy-MM-dd}&");
                 if (filter.EndDate.HasValue)
+                    queryBuilder.Append($"EndDate={filter.EndDate.Value:yyyy-MM-dd}&");
+                if (!string.IsNullOrEmpty(filter.SearchTerm)) // Corrigido para SearchTerm
+                    queryBuilder.Append($"SearchTerm={Uri.EscapeDataString(filter.SearchTerm)}&"); // Corrigido para SearchTerm
+                if (filter.Type.HasValue)
+                    queryBuilder.Append($"Type={filter.Type.Value}&");
+                if (filter.IsReconciled.HasValue)
+                    queryBuilder.Append($"IsReconciled={filter.IsReconciled.Value}&");
+
+                if (filter.AccountIds != null && filter.AccountIds.Any())
                 {
-                    queryParams.Add($"endDate={filter.EndDate.Value:yyyy-MM-dd}");
+                    foreach (var accountId in filter.AccountIds)
+                    {
+                        queryBuilder.Append($"AccountIds={accountId}&");
+                    }
+                }
+                if (filter.CategoryIds != null && filter.CategoryIds.Any())
+                {
+                    foreach (var categoryId in filter.CategoryIds)
+                    {
+                        queryBuilder.Append($"CategoryIds={categoryId}&");
+                    }
+                }
+                if (filter.TagIds != null && filter.TagIds.Any())
+                {
+                    foreach (var tagId in filter.TagIds)
+                    {
+                        queryBuilder.Append($"TagIds={tagId}&");
+                    }
                 }
                 
-                if (filter.MinAmount.HasValue)
-                {
-                    queryParams.Add($"minAmount={filter.MinAmount.Value}");
-                }
-                
-                if (filter.MaxAmount.HasValue)
-                {
-                    queryParams.Add($"maxAmount={filter.MaxAmount.Value}");
-                }
-                
-                if (!string.IsNullOrEmpty(filter.SearchTerm))
-                {
-                    queryParams.Add($"search={Uri.EscapeDataString(filter.SearchTerm)}");
-                }
-                
-                if (filter.IsRecurring.HasValue)
-                {
-                    queryParams.Add($"isRecurring={filter.IsRecurring.Value}");
-                }
-                
-                queryParams.Add($"includePending={filter.IncludePending}");
-                
-                var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-                
-                var response = await _httpClient.GetAsync($"{_apiEndpoint}/filter{queryString}");
-                
+                var queryString = queryBuilder.ToString().TrimEnd('&');
+                var response = await _httpClient.GetAsync(queryString);
+
                 if (response.IsSuccessStatusCode)
                 {
                     return await response.Content.ReadFromJsonAsync<List<TransactionViewModel>>(_jsonOptions) 
-                        ?? new List<TransactionViewModel>();
+                           ?? new List<TransactionViewModel>();
                 }
-                
+
                 return new List<TransactionViewModel>();
             }
             catch

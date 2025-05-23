@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace FinanceManager.ClientApp.Models
 {
     public class DateTimeRange
@@ -77,6 +80,11 @@ namespace FinanceManager.ClientApp.Models
             var now = DateTime.Today;
             var start = now.AddDays(-(int)now.DayOfWeek);
             return new DateTimeRange(start, now, "Esta Semana");
+        }
+        
+        public static DateTimeRange ThisMonth()
+        {
+            return CurrentMonth();
         }
         
         public static DateTimeRange LastWeek()

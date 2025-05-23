@@ -14,6 +14,11 @@ namespace FinanceManager.ClientApp.Models
         
         public ChartOptions Options { get; set; } = new();
         
+        // Propriedades adicionais para o gráfico de pizza usado no dashboard
+        public string Label { get; set; } = string.Empty;
+        public decimal Value { get; set; }
+        public string Color { get; set; } = "#2196F3";
+        
         public static ChartData CreateEmptyChart(string title = "", ChartType type = ChartType.Bar)
         {
             return new ChartData 
@@ -31,6 +36,11 @@ namespace FinanceManager.ClientApp.Models
                 },
                 Labels = new List<string> { "Sem dados" }
             };
+        }
+        
+        public static List<string> GetDefaultColors()
+        {
+            return ChartColors.DefaultColors;
         }
     }
 

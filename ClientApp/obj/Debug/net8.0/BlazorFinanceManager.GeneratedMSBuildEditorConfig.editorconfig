@@ -4,128 +4,138 @@ build_property.EnableSingleFileAnalyzer =
 build_property.EnableTrimAnalyzer = false
 build_property.IncludeAllContentForSelfExtract = 
 build_property.TargetFramework = net8.0
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
 build_property.TargetPlatformMinVersion = 
 build_property.UsingMicrosoftNETSdkWeb = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
 build_property.ProjectTypeGuids = 
 build_property.InvariantGlobalization = false
+build_property.InvariantGlobalization = false
+build_property.PlatformNeutralAssembly = 
 build_property.PlatformNeutralAssembly = 
 build_property.EnforceExtendedAnalyzerRules = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = browser
 build_property._SupportedPlatformList = browser
 build_property.RootNamespace = FinanceManager.ClientApp
 build_property.RootNamespace = FinanceManager.ClientApp
-build_property.ProjectDir = /home/runner/workspace/ClientApp/
+build_property.ProjectDir = C:\GitHub\FIN-PESSOAL\ClientApp\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = false
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = /home/runner/workspace/ClientApp
+build_property.MSBuildProjectDirectory = C:\GitHub\FIN-PESSOAL\ClientApp
 build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
 
-[/home/runner/workspace/ClientApp/App.razor]
+[C:/GitHub/FIN-PESSOAL/ClientApp/App.razor]
 build_metadata.AdditionalFiles.TargetPath = QXBwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Components/Authentication/RedirectToLogin.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BdXRoZW50aWNhdGlvbi9SZWRpcmVjdFRvTG9naW4ucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Components/Authentication/RedirectToLogin.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBdXRoZW50aWNhdGlvblxSZWRpcmVjdFRvTG9naW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Components/Layout/EmptyLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvRW1wdHlMYXlvdXQucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Components/Layout/EmptyLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcRW1wdHlMYXlvdXQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Components/Layout/MainLayout.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvTWFpbkxheW91dC5yYXpvcg==
+[C:/GitHub/FIN-PESSOAL/ClientApp/Components/Layout/MainLayout.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Components/Layout/NavMenu.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9MYXlvdXQvTmF2TWVudS5yYXpvcg==
+[C:/GitHub/FIN-PESSOAL/ClientApp/Components/Layout/NavMenu.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTmF2TWVudS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Accounts/AccountDetails.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudHMvQWNjb3VudERldGFpbHMucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Accounts/AccountDetails.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudHNcQWNjb3VudERldGFpbHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Accounts/AccountsList.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudHMvQWNjb3VudHNMaXN0LnJhem9y
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Accounts/AccountsList.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudHNcQWNjb3VudHNMaXN0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Accounts/AddEditAccount.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQWNjb3VudHMvQWRkRWRpdEFjY291bnQucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Accounts/AddEditAccount.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudHNcQWRkRWRpdEFjY291bnQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Authentication/ForgotPassword.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXV0aGVudGljYXRpb24vRm9yZ290UGFzc3dvcmQucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Authentication/ForgotPassword.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aGVudGljYXRpb25cRm9yZ290UGFzc3dvcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Authentication/Login.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXV0aGVudGljYXRpb24vTG9naW4ucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Authentication/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aGVudGljYXRpb25cTG9naW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Authentication/Register.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQXV0aGVudGljYXRpb24vUmVnaXN0ZXIucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Authentication/Register.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXV0aGVudGljYXRpb25cUmVnaXN0ZXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Budgets/BudgetOverview.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQnVkZ2V0cy9CdWRnZXRPdmVydmlldy5yYXpvcg==
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Budgets/BudgetOverview.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnVkZ2V0c1xCdWRnZXRPdmVydmlldy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Budgets/CategoryBudgets.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQnVkZ2V0cy9DYXRlZ29yeUJ1ZGdldHMucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Budgets/CategoryBudgets.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnVkZ2V0c1xDYXRlZ29yeUJ1ZGdldHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/CreditCards/AddEditCard.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ3JlZGl0Q2FyZHMvQWRkRWRpdENhcmQucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/CreditCards/AddEditCard.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ3JlZGl0Q2FyZHNcQWRkRWRpdENhcmQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/CreditCards/CardDetails.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ3JlZGl0Q2FyZHMvQ2FyZERldGFpbHMucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/CreditCards/CardDetails.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ3JlZGl0Q2FyZHNcQ2FyZERldGFpbHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/CreditCards/CardsList.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvQ3JlZGl0Q2FyZHMvQ2FyZHNMaXN0LnJhem9y
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/CreditCards/CardsList.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ3JlZGl0Q2FyZHNcQ2FyZHNMaXN0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Dashboard/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRGFzaGJvYXJkL0luZGV4LnJhem9y
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/DashboardPage.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkUGFnZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/DashboardPage.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvRGFzaGJvYXJkUGFnZS5yYXpvcg==
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Dashboard/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGFzaGJvYXJkXEluZGV4LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Index.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSW5kZXgucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Index.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXgucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Investments/InvestmentDetails.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSW52ZXN0bWVudHMvSW52ZXN0bWVudERldGFpbHMucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Investments/InvestmentDetails.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW52ZXN0bWVudHNcSW52ZXN0bWVudERldGFpbHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Investments/InvestmentsList.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvSW52ZXN0bWVudHMvSW52ZXN0bWVudHNMaXN0LnJhem9y
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Investments/InvestmentsList.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW52ZXN0bWVudHNcSW52ZXN0bWVudHNMaXN0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Reports/ReportsHome.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvUmVwb3J0cy9SZXBvcnRzSG9tZS5yYXpvcg==
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Reports/ReportsHome.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVwb3J0c1xSZXBvcnRzSG9tZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Transactions/AddEditTransaction.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvVHJhbnNhY3Rpb25zL0FkZEVkaXRUcmFuc2FjdGlvbi5yYXpvcg==
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Transactions/AddEditTransaction.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVHJhbnNhY3Rpb25zXEFkZEVkaXRUcmFuc2FjdGlvbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Pages/Transactions/TransactionsList.razor]
-build_metadata.AdditionalFiles.TargetPath = UGFnZXMvVHJhbnNhY3Rpb25zL1RyYW5zYWN0aW9uc0xpc3QucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Pages/Transactions/TransactionsList.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVHJhbnNhY3Rpb25zXFRyYW5zYWN0aW9uc0xpc3QucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Shared/ConfirmDialog.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0NvbmZpcm1EaWFsb2cucmF6b3I=
+[C:/GitHub/FIN-PESSOAL/ClientApp/Shared/ConfirmDialog.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXENvbmZpcm1EaWFsb2cucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/Shared/LoginDisplay.razor]
-build_metadata.AdditionalFiles.TargetPath = U2hhcmVkL0xvZ2luRGlzcGxheS5yYXpvcg==
+[C:/GitHub/FIN-PESSOAL/ClientApp/Shared/LoginDisplay.razor]
+build_metadata.AdditionalFiles.TargetPath = U2hhcmVkXExvZ2luRGlzcGxheS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/runner/workspace/ClientApp/_Imports.razor]
+[C:/GitHub/FIN-PESSOAL/ClientApp/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = X0ltcG9ydHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 

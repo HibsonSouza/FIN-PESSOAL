@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Blazored.LocalStorage;
+using FinanceManager.ClientApp.Components.Authentication;
 using FinanceManager.ClientApp.Models;
 using FinanceManager.ClientApp.Store;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -43,7 +44,10 @@ namespace FinanceManager.ClientApp.Services
                     await _localStorage.SetItemAsync("authToken", response.Token);
                     await _localStorage.SetItemAsync("userName", response.Name);
                     
-                    (_authStateProvider as CustomAuthStateProvider)?.NotifyAuthenticationStateChanged();
+                    // Notificar autenticação do usuário
+                    (_authStateProvider as CustomAuthStateProvider)?.NotifyUserAuthentication(
+                        response.Token,
+                        new UserViewModel { Name = response.Name, Email = response.Email, Id = string.Empty });
                     
                     return AuthResult.Success();
                 }
@@ -82,7 +86,8 @@ namespace FinanceManager.ClientApp.Services
                 await _localStorage.RemoveItemAsync("authToken");
                 await _localStorage.RemoveItemAsync("userName");
                 
-                (_authStateProvider as CustomAuthStateProvider)?.NotifyAuthenticationStateChanged();
+                // Notificar logout do usuário
+                (_authStateProvider as CustomAuthStateProvider)?.NotifyUserLogout();
                 
                 return AuthResult.Success();
             }

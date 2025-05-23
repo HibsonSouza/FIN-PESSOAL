@@ -157,9 +157,8 @@
         {
             // Obter os dados resumidos
             var dateRange = DateTimeRange.ThisMonth();
-            
-            // Obter resumo de contas
-            var contas = await AccountService.GetAccounts();
+              // Obter resumo de contas
+            var contas = await AccountService.GetAccountsAsync();
             _saldoTotal = contas.Sum(c => c.Balance);
             
             // Obter transações do mês atual
@@ -168,19 +167,16 @@
             _despesasMes = transacoesMes.Where(t => t.Type == TransactionType.Expense).Sum(t => t.Amount);
             
             // Obter transações recentes
-            _transacoesRecentes = await TransactionService.GetRecentTransactions(5);
-            
-            // Obter dados para o gráfico de categorias
+            _transacoesRecentes = await TransactionService.GetRecentTransactions(5);            // Obter dados para o gráfico de categorias
             var categorias = await CategoryService.GetCategorySummary(dateRange);
-            var cores = ChartData.GetDefaultColors();
+            var cores = ChartColors.GetRandomColors(categorias.Count);
             
             _categoriasChart = categorias
                 .Where(c => c.TotalAmount > 0)
                 .Select((c, i) => new ChartData
-                {
-                    Label = c.CategoryName,
+                {                    Label = c.CategoryName,
                     Value = c.TotalAmount,
-                    Color = i < cores.Count ? cores[i] : "#9e9e9e"
+                    Color = c.CategoryColor ?? (i < cores.Count ? cores[i] : "#9e9e9e")
                 })
                 .ToList();
         }

@@ -1,11 +1,11 @@
 using FinanceManager.ClientApp.Models;
 using FinanceManager.ClientApp.Services.Interfaces;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 
 namespace FinanceManager.ClientApp.Services
-{
-    public class AccountService : IAccountService
+{    public class AccountService : IAccountService
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiEndpoint = "api/accounts";
@@ -19,7 +19,7 @@ namespace FinanceManager.ClientApp.Services
             _httpClient = httpClient;
         }
 
-        public async Task<List<AccountViewModel>> GetAccounts()
+        public async Task<IEnumerable<AccountViewModel>> GetAccountsAsync()
         {
             try
             {
@@ -39,7 +39,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<AccountViewModel> GetAccountById(string id)
+        public async Task<AccountViewModel> GetAccountByIdAsync(string id)
         {
             try
             {
@@ -59,33 +59,48 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<bool> CreateAccount(AccountCreateModel account)
+        public async Task<AccountViewModel> CreateAccountAsync(AccountFormModel model)
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync(_apiEndpoint, account);
-                return response.IsSuccessStatusCode;
+                var response = await _httpClient.PostAsJsonAsync(_apiEndpoint, model);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<AccountViewModel>(_jsonOptions) 
+                        ?? new AccountViewModel();
+                }
+                
+                return new AccountViewModel();
             }
             catch
             {
-                return false;
+                return new AccountViewModel();
             }
         }
 
-        public async Task<bool> UpdateAccount(string id, AccountUpdateModel account)
+        public async Task<AccountViewModel> UpdateAccountAsync(AccountFormModel model)
         {
             try
             {
-                var response = await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/{id}", account);
-                return response.IsSuccessStatusCode;
+                string id = model.Id ?? string.Empty;
+                var response = await _httpClient.PutAsJsonAsync($"{_apiEndpoint}/{id}", model);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<AccountViewModel>(_jsonOptions) 
+                        ?? new AccountViewModel();
+                }
+                
+                return new AccountViewModel();
             }
             catch
             {
-                return false;
+                return new AccountViewModel();
             }
         }
 
-        public async Task<bool> DeleteAccount(string id)
+        public async Task<bool> DeleteAccountAsync(string id)
         {
             try
             {
@@ -97,8 +112,28 @@ namespace FinanceManager.ClientApp.Services
                 return false;
             }
         }
+        
+        public async Task<IEnumerable<TransactionViewModel>> GetAccountTransactionsAsync(string accountId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/{accountId}/transactions");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<List<TransactionViewModel>>(_jsonOptions) 
+                        ?? new List<TransactionViewModel>();
+                }
+                
+                return new List<TransactionViewModel>();
+            }
+            catch
+            {
+                return new List<TransactionViewModel>();
+            }
+        }
 
-        public async Task<decimal> GetTotalBalance()
+        public async Task<decimal> GetTotalBalanceAsync()
         {
             try
             {

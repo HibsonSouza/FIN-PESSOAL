@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
 namespace FinanceManager.ClientApp.Models
-{
-    public class TransactionViewModel
+{    public class TransactionViewModel
     {
         public string Id { get; set; } = string.Empty;
         
@@ -32,6 +31,10 @@ namespace FinanceManager.ClientApp.Models
         
         public string? RecurrenceId { get; set; }
         
+        public string? RecurrencePattern { get; set; }
+        
+        public DateTime? EndDate { get; set; }
+        
         public bool IsPending { get; set; }
         
         public string? Notes { get; set; }
@@ -39,6 +42,22 @@ namespace FinanceManager.ClientApp.Models
         public List<TagViewModel> Tags { get; set; } = new();
         
         public List<AttachmentViewModel> Attachments { get; set; } = new();
+        
+        // Propriedades adicionais
+        public string? Location { get; set; }
+        
+        public bool IsReconciled { get; set; } = false;
+        
+        public string? CreditCardId { get; set; }
+        
+        public string? ReceiptUrl { get; set; }
+        
+        // Propriedades para parcelamento
+        public bool IsInstallment { get; set; } = false;
+        
+        public int? TotalInstallments { get; set; }
+        
+        public int? CurrentInstallment { get; set; }
     }
     
     public class TransactionCreateModel
@@ -76,8 +95,7 @@ namespace FinanceManager.ClientApp.Models
         
         public List<string> TagIds { get; set; } = new();
     }
-    
-    public class TransactionUpdateModel
+      public class TransactionUpdateModel
     {
         [Required(ErrorMessage = "A descrição é obrigatória")]
         [StringLength(100, ErrorMessage = "A descrição deve ter no máximo 100 caracteres")]
@@ -107,6 +125,20 @@ namespace FinanceManager.ClientApp.Models
         public List<string> TagIds { get; set; } = new();
         
         public bool UpdateRecurringSeries { get; set; } = false;
+        
+        // Propriedades adicionais para compatibilidade
+        public string? Location { get; set; }
+        
+        public bool IsReconciled { get; set; } = false;
+        
+        public string? CreditCardId { get; set; }
+        
+        // Alias para compatibilidade
+        public IEnumerable<string> Tags
+        {
+            get => TagIds;
+            set => TagIds = value.ToList();
+        }
     }
     
     public class TagViewModel

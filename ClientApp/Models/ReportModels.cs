@@ -25,20 +25,18 @@ namespace FinanceManager.ClientApp.Models
     }
     
     public class FinancialSummaryModel
-    {
-        public decimal TotalIncome { get; set; }
+    {        public decimal TotalIncome { get; set; }
         public decimal TotalExpenses { get; set; }
         public decimal NetSavings { get; set; }
         public decimal SavingsRate { get; set; }
-        public List<CategorySummaryModel> TopExpenseCategories { get; set; } = new();
-        public List<CategorySummaryModel> TopIncomeCategories { get; set; } = new();
+        public List<CategorySummary> TopExpenseCategories { get; set; } = new();
+        public List<CategorySummary> TopIncomeCategories { get; set; } = new();
         public ChartData IncomeVsExpensesChart { get; set; } = new();
     }
-    
-    public class CategoryBreakdownModel
+      public class CategoryBreakdownModel
     {
         public TransactionType Type { get; set; }
-        public List<CategorySummaryModel> Categories { get; set; } = new();
+        public List<CategorySummary> Categories { get; set; } = new();
         public ChartData Chart { get; set; } = new();
     }
     
@@ -154,10 +152,9 @@ namespace FinanceManager.ClientApp.Models
         public decimal MonthlyExpenses { get; set; }
         public decimal MonthlySavings { get; set; }
         public decimal MonthlyBudget { get; set; }
-        public decimal BudgetRemaining { get; set; }
-        public decimal BudgetUsedPercentage { get; set; }
+        public decimal BudgetRemaining { get; set; }        public decimal BudgetUsedPercentage { get; set; }
         public List<AccountViewModel> Accounts { get; set; } = new();
-        public List<CategorySummaryModel> TopExpenseCategories { get; set; } = new();
+        public List<CategorySummary> TopExpenseCategories { get; set; } = new();
         public List<TransactionViewModel> RecentTransactions { get; set; } = new();
         public List<BudgetProgressViewModel> BudgetProgress { get; set; } = new();
         public ChartData ExpensesByCategoryChart { get; set; } = new();

@@ -48,5 +48,9 @@ namespace FinanceManager.ClientApp.Models
         public string Token { get; set; } = string.Empty;
         public DateTime Expiration { get; set; }
         public string? RefreshToken { get; set; }
+        public UserViewModel? User { get; set; }
+
+        public static AuthResult SuccessResult(string message = "") => new AuthResult { Success = true, Message = message };
+        public static AuthResult FailedResult(string message) => new AuthResult { Success = false, Message = message };
     }
 }

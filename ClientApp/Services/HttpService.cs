@@ -33,8 +33,7 @@ namespace FinanceManager.ClientApp.Services
             NavigationManager navigationManager)
         {
             _httpClient = httpClient;
-            _localStorage = localStorage;
-            _navigationManager = navigationManager;
+            _localStorage = localStorage;            _navigationManager = navigationManager;
             
             _jsonOptions = new JsonSerializerOptions
             {
@@ -42,7 +41,7 @@ namespace FinanceManager.ClientApp.Services
             };
 
             // Configure base URL for API
-            _httpClient.BaseAddress = new Uri("http://localhost:8000/");
+            _httpClient.BaseAddress = new Uri(navigationManager.BaseUri + "api/");
         }
 
         public async Task<T> GetAsync<T>(string uri)
@@ -92,9 +91,7 @@ namespace FinanceManager.ClientApp.Services
                 await _localStorage.RemoveItemAsync("authToken");
                 _navigationManager.NavigateTo("/login");
                 throw new UnauthorizedAccessException("Authentication failed");
-            }
-
-            // Throw exception if not successful
+            }            // Throw exception if not successful
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>(_jsonOptions);
@@ -106,7 +103,7 @@ namespace FinanceManager.ClientApp.Services
             }
 
             // Return data from response
-            return await response.Content.ReadFromJsonAsync<T>(_jsonOptions);
+            return await response.Content.ReadFromJsonAsync<T>(_jsonOptions) ?? throw new InvalidOperationException("Failed to deserialize response");
         }
     }
 }

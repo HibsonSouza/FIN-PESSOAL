@@ -5,3 +5,10 @@
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.csproj.CoreCompileInputs.cache
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.MvcApplicationPartsAssemblyInfo.cache
 /home/runner/workspace/ClientApp/obj/Debug/net8.0/BlazorFinanceManager.sourcelink.json
+c:\GitHub\FIN-PESSOAL\ClientApp\obj\Debug\net8.0\BlazorFinanceManager.csproj.AssemblyReference.cache
+c:\GitHub\FIN-PESSOAL\ClientApp\obj\Debug\net8.0\BlazorFinanceManager.GeneratedMSBuildEditorConfig.editorconfig
+c:\GitHub\FIN-PESSOAL\ClientApp\obj\Debug\net8.0\BlazorFinanceManager.AssemblyInfoInputs.cache
+c:\GitHub\FIN-PESSOAL\ClientApp\obj\Debug\net8.0\BlazorFinanceManager.AssemblyInfo.cs
+c:\GitHub\FIN-PESSOAL\ClientApp\obj\Debug\net8.0\BlazorFinanceManager.csproj.CoreCompileInputs.cache
+c:\GitHub\FIN-PESSOAL\ClientApp\obj\Debug\net8.0\BlazorFinanceManager.MvcApplicationPartsAssemblyInfo.cache
+c:\GitHub\FIN-PESSOAL\ClientApp\obj\Debug\net8.0\BlazorFinanceManager.sourcelink.json

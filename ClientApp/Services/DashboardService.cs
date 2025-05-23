@@ -18,8 +18,29 @@ namespace FinanceManager.ClientApp.Services
         {
             _httpClient = httpClient;
         }
+        
+        public async Task<DashboardViewModel?> GetDashboardDataAsync(FinanceManager.ClientApp.Models.DateTimeRange dateRange)
+        {
+            try
+            {
+                var queryString = $"?startDate={dateRange.Start:yyyy-MM-dd}&endDate={dateRange.End:yyyy-MM-dd}";
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}{queryString}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<DashboardViewModel>(_jsonOptions);
+                }
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao obter dados do dashboard: {ex.Message}");
+                return null;
+            }
+        }
 
-        public async Task<decimal> GetTotalBalance()
+        public async Task<decimal> GetTotalBalanceAsync()
         {
             try
             {
@@ -38,7 +59,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<decimal> GetMonthlyIncome()
+        public async Task<decimal> GetMonthlyIncomeAsync()
         {
             try
             {
@@ -57,7 +78,7 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<decimal> GetMonthlyExpenses()
+        public async Task<decimal> GetMonthlyExpensesAsync()
         {
             try
             {
@@ -76,48 +97,49 @@ namespace FinanceManager.ClientApp.Services
             }
         }
 
-        public async Task<IEnumerable<ChartData>> GetCategoryExpenses(DateTimeRange dateRange)
+        public async Task<IEnumerable<CategorySummaryViewModel>> GetExpensesByCategoryAsync(FinanceManager.ClientApp.Models.DateTimeRange dateRange)
         {
             try
             {
-                var response = await _httpClient.GetAsync(
-                    $"{_apiEndpoint}/category-expenses?startDate={dateRange.Start:yyyy-MM-dd}&endDate={dateRange.End:yyyy-MM-dd}");
+                var queryString = $"?startDate={dateRange.Start:yyyy-MM-dd}&endDate={dateRange.End:yyyy-MM-dd}";
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/expenses-by-category{queryString}");
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<ChartData>>(_jsonOptions) 
-                        ?? new List<ChartData>();
+                    return await response.Content.ReadFromJsonAsync<List<CategorySummaryViewModel>>(_jsonOptions) 
+                        ?? new List<CategorySummaryViewModel>();
                 }
                 
-                return new List<ChartData>();
+                return new List<CategorySummaryViewModel>();
             }
             catch
             {
-                return new List<ChartData>();
+                return new List<CategorySummaryViewModel>();
             }
         }
 
-        public async Task<IEnumerable<ChartData>> GetMonthlyBalanceHistory(int numberOfMonths = 6)
+        public async Task<IEnumerable<BalanceForecastViewModel>> GetCashFlowAsync(FinanceManager.ClientApp.Models.DateTimeRange dateRange)
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_apiEndpoint}/monthly-balance-history?months={numberOfMonths}");
+                var queryString = $"?startDate={dateRange.Start:yyyy-MM-dd}&endDate={dateRange.End:yyyy-MM-dd}";
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/cash-flow{queryString}");
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<ChartData>>(_jsonOptions) 
-                        ?? new List<ChartData>();
+                    return await response.Content.ReadFromJsonAsync<List<BalanceForecastViewModel>>(_jsonOptions) 
+                        ?? new List<BalanceForecastViewModel>();
                 }
                 
-                return new List<ChartData>();
+                return new List<BalanceForecastViewModel>();
             }
             catch
             {
-                return new List<ChartData>();
+                return new List<BalanceForecastViewModel>();
             }
         }
 
-        public async Task<IEnumerable<ChartData>> GetSavingsGoalsProgress()
+        public async Task<IEnumerable<SavingsGoalProgress>> GetSavingsGoalsProgressAsync()
         {
             try
             {
@@ -125,15 +147,35 @@ namespace FinanceManager.ClientApp.Services
                 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<List<ChartData>>(_jsonOptions) 
-                        ?? new List<ChartData>();
+                    return await response.Content.ReadFromJsonAsync<List<SavingsGoalProgress>>(_jsonOptions) 
+                        ?? new List<SavingsGoalProgress>();
                 }
                 
-                return new List<ChartData>();
+                return new List<SavingsGoalProgress>();
             }
             catch
             {
-                return new List<ChartData>();
+                return new List<SavingsGoalProgress>();
+            }
+        }
+
+        public async Task<List<BudgetProgressViewModel>> GetBudgetProgressAsync()
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"{_apiEndpoint}/budget-progress");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<List<BudgetProgressViewModel>>(_jsonOptions) 
+                        ?? new List<BudgetProgressViewModel>();
+                }
+                
+                return new List<BudgetProgressViewModel>();
+            }
+            catch
+            {
+                return new List<BudgetProgressViewModel>();
             }
         }
     }

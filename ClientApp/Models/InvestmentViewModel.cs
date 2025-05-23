@@ -13,9 +13,9 @@ namespace FinanceManager.ClientApp.Models
         public decimal InitialValue { get; set; }
         public decimal CurrentValue { get; set; }
         public decimal Profitability { get; set; }  // Em percentual
-        public decimal PerformancePercentage => (CurrentValue - InitialValue) / InitialValue * 100;
+        public decimal PerformancePercentage => InitialValue != 0 ? (CurrentValue - InitialValue) / InitialValue * 100 : 0; // Proteção contra divisão por zero
         public string Institution { get; set; } = string.Empty;
-        public DateTime StartDate { get; set; }
+        public DateTime StartDate { get; set; } = DateTime.Today; // Inicializado com DateTime.Today
         public DateTime? MaturityDate { get; set; }
         public string Icon { get; set; } = string.Empty;
         public string Color { get; set; } = string.Empty;
@@ -32,6 +32,9 @@ namespace FinanceManager.ClientApp.Models
         
         // Propriedade para cálculo de ganho/perda
         public decimal GainLoss => CurrentValue - InitialValue;
+        
+        // Propriedade para cálculo de ganho/perda percentual
+        public decimal GainLossPercentage => PerformancePercentage;
     }
 
     public enum InvestmentType

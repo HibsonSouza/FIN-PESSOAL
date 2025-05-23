@@ -3,41 +3,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FinanceManager.ClientApp.Models
 {
-    public class TransactionFormModel
-    {
-        [Required(ErrorMessage = "Selecione uma conta")]
-        public int AccountId { get; set; }
-        
-        public int? CategoryId { get; set; }
-        
-        [Required(ErrorMessage = "Digite um valor")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "O valor deve ser maior que zero")]
-        public decimal Amount { get; set; }
-        
-        [Required(ErrorMessage = "Selecione um tipo")]
-        public TransactionType Type { get; set; }
-        
-        [Required(ErrorMessage = "Selecione uma data")]
-        public DateTime Date { get; set; } = DateTime.Today;
-        
-        [Required(ErrorMessage = "Digite uma descrição")]
-        [StringLength(255, ErrorMessage = "A descrição não pode ter mais de 255 caracteres")]
-        public string Description { get; set; }
-        
-        public string Notes { get; set; }
-        
-        public bool IsRecurring { get; set; }
-        
-        public RecurringPeriod? RecurringPeriod { get; set; }
-    }
-    
     public class BudgetFormModel
     {
         [Required(ErrorMessage = "Digite um nome")]
         [StringLength(100, ErrorMessage = "O nome não pode ter mais de 100 caracteres")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty; // Inicializado
         
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty; // Inicializado
         
         [Required(ErrorMessage = "Digite um valor")]
         [Range(0.01, double.MaxValue, ErrorMessage = "O valor deve ser maior que zero")]
@@ -128,7 +100,7 @@ namespace FinanceManager.ClientApp.Models
             };
         }
     }
-    
+
     public class InvestmentTransactionFormModel
     {
         [Required(ErrorMessage = "O investimento é obrigatório")]
@@ -149,20 +121,8 @@ namespace FinanceManager.ClientApp.Models
         [Range(0.0001, double.MaxValue, ErrorMessage = "O preço deve ser maior que zero")]
         public decimal Price { get; set; }
         
-        // Propriedade para compatibilidade com código existente
-        public decimal Shares 
-        { 
-            get => Quantity; 
-            set => Quantity = value; 
-        }
-        
-        // Propriedade para compatibilidade com código existente
-        public decimal PricePerShare 
-        { 
-            get => Price; 
-            set => Price = value; 
-        }
-        
+        public decimal Shares { get => Quantity; set => Quantity = value; }
+        public decimal PricePerShare { get => Price; set => Price = value; }
         public decimal Taxes { get; set; }
         
         [Required(ErrorMessage = "Selecione uma data")]
